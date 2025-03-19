@@ -12,3 +12,16 @@ type User struct {
 	CreatedAt    time.Time `db:"createdAt"`
 	UpdatedAt    time.Time `db:"updatedAt"`
 }
+
+// Constructor function to create a new User with default timestamps
+func NewUser(email, firstName, lastName, passwordHash string, dob time.Time) *User {
+	now := time.Now()
+	return &User{
+		Email:        email,
+		FirstName:    firstName,
+		LastName:     lastName,
+		PasswordHash: passwordHash,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+}

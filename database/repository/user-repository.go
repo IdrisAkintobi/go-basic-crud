@@ -45,3 +45,16 @@ func (r *UserRepository) GetUserByEmail(email string) (*schema.User, error) {
 
 	return &result, nil
 }
+
+func (r *UserRepository) GetUserById(userId int) (*schema.User, error) {
+	var result schema.User
+	row := r.db.QueryRow(context.Background(), `SELECT * FROM users WHERE id = $1`, userId)
+
+	err := row.Scan(&result.ID, &result.Email, &result.DOB, &result.FirstName, &result.LastName, &result.PasswordHash, &result.CreatedAt, &result.UpdatedAt)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}

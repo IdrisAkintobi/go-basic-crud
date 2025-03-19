@@ -70,3 +70,25 @@ func (ts *RepositoryTestSuite) TestGetUserByEmail() {
 	ts.ErrorIs(err, pgx.ErrNoRows)
 	ts.Nil(dbUser)
 }
+
+func (ts *RepositoryTestSuite) TestGetUserById() {
+	ts.TestInsertUser()
+	// Create user repository
+	ur := repository.NewUserRepository(ts.db)
+
+	// Get user
+	dbUser, err := ur.GetUserByEmail(testUser.Email)
+	ts.NoError(err)
+	dbUser, err = ur.GetUserById(dbUser.ID)
+	ts.NoError(err)
+
+	// Assert
+	ts.Equal(testUser.Email, dbUser.Email)
+	ts.Equal(testUser.PasswordHash, dbUser.PasswordHash)
+
+	//Get non-existing user
+	dbUser, err = ur.GetUserByEmail(fmt.Sprintf("%d", testUser.ID+12))
+	ts.Error(err)
+	ts.ErrorIs(err, pgx.ErrNoRows)
+	ts.Nil(dbUser)
+}

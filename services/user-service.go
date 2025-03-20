@@ -21,21 +21,29 @@ func NewUserService(db *pgx.Conn) *UserService {
 
 func (us *UserService) RegisterUser(usr *dto.RegisterUserReqDTO) (*dto.RegisterUserResDTO, error) {
 
+	// Parse user DOB string to time format
 	dob, err := time.Parse(utils.DATE_LAYOUT, usr.DOB)
 	if err != nil {
 		return nil, fmt.Errorf("invalid date format: %v", err)
 	}
 
-	newUserData := schema.NewUser(usr.Email, usr.FirstName, usr.LastName, usr.Password, dob)
+	// Hash password
+	passwordHash, err := utils.Argon2id.GenerateHash([]byte(usr.Password), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	newUserData := schema.NewUser(usr.Email, usr.FirstName, usr.LastName, passwordHash, dob)
 
 	newUser, err := us.ur.CreateUser(newUserData)
 	if err != nil {
 		return nil, err
 	}
+
 	// Convert to the returned type
 	data := &dto.RegisterUserResDTO{
 		Email:     newUser.Email,
-		DOB:       newUser.DOB.Local().Format(utils.DATE_LAYOUT),
+		DOB:       newUser.DOB.Format(utils.DATE_LAYOUT),
 		FirstName: newUser.FirstName,
 		LastName:  newUser.LastName,
 		CreatedAt: newUser.CreatedAt,

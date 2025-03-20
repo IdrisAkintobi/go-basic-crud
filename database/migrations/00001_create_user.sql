@@ -6,7 +6,7 @@ CREATE TABLE users (
     dob DATE NOT NULL,
     firstName TEXT NOT NULL,
     lastName TEXT NOT NULL,
-    passwordHash TEXT NOT NULL,
+    passwordHash BYTEA NOT NULL,
     createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

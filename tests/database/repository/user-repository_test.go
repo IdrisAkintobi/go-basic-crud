@@ -7,15 +7,16 @@ import (
 
 	"github.com/IdrisAkintobi/go-basic-crud/database/repository"
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
+	"github.com/IdrisAkintobi/go-basic-crud/utils"
 	"github.com/jackc/pgx/v5"
 )
 
 var testUser = &schema.User{
 	Email:        "john.doe@example.com",
-	DOB:          time.Date(1991, 4, 17, 0, 0, 0, 0, time.UTC),
+	DOB:          time.Date(1990, 1, 11, 0, 0, 0, 0, time.UTC),
 	FirstName:    "John",
 	LastName:     "Doe",
-	PasswordHash: "password123",
+	PasswordHash: []byte(""),
 }
 
 func countDB(db *pgx.Conn) (int, error) {
@@ -49,6 +50,28 @@ func (ts *RepositoryTestSuite) TestInsertUser() {
 	ts.Equal(after, before+1)
 	ts.True(dbUser.CreatedAt.Equal(dbUser.UpdatedAt))
 	ts.Equal(testUser.Email, dbUser.Email)
+}
+
+func (ts *RepositoryTestSuite) TestPasswordHash() {
+	// Create user repository
+	ur := repository.NewUserRepository(ts.db)
+
+	// Update password
+	passwordHash, err := utils.Argon2id.GenerateHash([]byte("password123"), nil)
+	ts.NoError(err)
+	testUser.PasswordHash = passwordHash
+
+	// Save user to the db
+	_, err = ur.CreateUser(testUser)
+	ts.NoError(err)
+
+	// Get user
+	dbUser, err := ur.GetUserByEmail(testUser.Email)
+	ts.NoError(err)
+
+	// Assert
+	ts.Equal(testUser.Email, dbUser.Email)
+	ts.Equal(passwordHash, dbUser.PasswordHash)
 }
 
 func (ts *RepositoryTestSuite) TestGetUserByEmail() {

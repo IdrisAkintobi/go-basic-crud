@@ -22,12 +22,13 @@ This project demonstrates how to build a simple CRUD API for user management and
    cd go-basic-crud
    ```
 
-2. Create a `.env` file with the necessary environment variables. Example:
+2. Create a `.env` using the `.env.example` file:
 
-   ```env
-   TEST_DATABASE_NAME=test_db
-   TEST_DATABASE_URL=postgres://user:password@localhost:5432/test_db?sslmode=disable
+   ```sh
+   cp .env.example .env
    ```
+
+   Update the `.env` file with your PostgreSQL database connection details.
 
 3. Install dependencies:
 

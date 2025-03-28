@@ -5,22 +5,27 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/httprate"
 
 	"github.com/IdrisAkintobi/go-basic-crud/database"
 	"github.com/IdrisAkintobi/go-basic-crud/handlers"
+	"github.com/IdrisAkintobi/go-basic-crud/middlewares"
 	"github.com/joho/godotenv"
 )
 
-func main() {
+func init() {
 	// Load .env file
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file: %s", err)
 	}
+}
 
+func main() {
 	PORT := os.Getenv("PORT")
 	if PORT == "" {
 		PORT = "3003"
@@ -34,11 +39,13 @@ func main() {
 
 	// Setup handler
 	uh := handlers.NewUserHandler(conn)
+	ah := handlers.NewAuthHandler(conn)
 
 	// Setup routers
 	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Post("/", uh.RegisterUser)
+	r.Use(httprate.LimitByIP(100, 1*time.Minute), middleware.CleanPath, middleware.StripSlashes, middleware.Logger, middleware.Recoverer)
+	r.Post("/register", uh.RegisterUser)
+	r.With(middlewares.GetUserFingerprint).Post("/login", ah.Login)
 
 	// Start server
 	fmt.Printf("Server starting on %v\n", PORT)

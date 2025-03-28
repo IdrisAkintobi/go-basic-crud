@@ -30,14 +30,14 @@ func (us *UserService) RegisterUser(usr *dto.RegisterUserReqDTO) (*dto.RegisterU
 	// Hash password
 	passwordHash, err := utils.Argon2id.GenerateHash([]byte(usr.Password), nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("internal server error: %w", err)
 	}
 
 	newUserData := schema.NewUser(usr.Email, usr.FirstName, usr.LastName, passwordHash, dob)
 
 	newUser, err := us.ur.CreateUser(newUserData)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 
 	// Convert to the returned type

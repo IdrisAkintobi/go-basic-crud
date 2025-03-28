@@ -44,7 +44,7 @@ func (r *UserRepository) GetUserByEmail(email string) (*schema.User, error) {
 	return &result, nil
 }
 
-func (r *UserRepository) GetUserById(userId int) (*schema.User, error) {
+func (r *UserRepository) GetUserById(userId string) (*schema.User, error) {
 	var result schema.User
 	row := r.db.QueryRow(context.Background(), `SELECT * FROM users WHERE id = $1`, userId)
 

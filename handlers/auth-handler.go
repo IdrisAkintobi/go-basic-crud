@@ -25,6 +25,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	err := json.NewDecoder(r.Body).Decode(&loginData)
 	if err != nil {
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	reqFingerprint := r.Context().Value(utils.FPCtxKey).(middlewares.UserFingerprint)
@@ -35,6 +36,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	token, err := ah.as.SignIn(&loginData)
 	if err != nil {
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	resp := dto.AuthLoginResDTO{Token: token}

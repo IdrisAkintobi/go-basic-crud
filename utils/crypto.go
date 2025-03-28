@@ -75,7 +75,7 @@ func (a *argon2idConf) Compare(passwordHash, password []byte) (bool, error) {
 		return false, err
 	}
 	// Compare the generated hash with the stored hash.
-	return bytes.Equal(passwordHash, hash[a.saltLen:]), nil
+	return bytes.Equal(passwordHash, hash), nil
 }
 
 func Hash(text string) string {

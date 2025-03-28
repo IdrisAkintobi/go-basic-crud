@@ -40,6 +40,5 @@ func (as *AuthService) SignIn(cred *dto.AuthLoginReqDTO) (token string, err erro
 		return "", ErrInvalidCred
 	}
 
-	token, err = as.ss.CreateSession(user.ID, cred.UserAgent, cred.IPAddress)
-	return
+	return as.ss.CreateSession(user.ID, cred.UserAgent, cred.IPAddress)
 }

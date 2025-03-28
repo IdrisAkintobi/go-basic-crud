@@ -8,5 +8,5 @@ type AuthLoginReqDTO struct {
 }
 
 type AuthLoginResDTO struct {
-	Token string `token:"email"`
+	Token string `json:"token"`
 }

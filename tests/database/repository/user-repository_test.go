@@ -11,7 +11,9 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var testUser = &schema.User{
+const mockUUID = "f4bd11c8-840a-45eb-b72a-917bd90996a7"
+
+var mockUser = &schema.User{
 	Email:        "john.doe@example.com",
 	DOB:          time.Date(1990, 1, 11, 0, 0, 0, 0, time.UTC),
 	FirstName:    "John",
@@ -19,7 +21,7 @@ var testUser = &schema.User{
 	PasswordHash: []byte(""),
 }
 
-func countDB(db *pgx.Conn) (int, error) {
+func countUsers(db *pgx.Conn) (int, error) {
 	var count int
 	err := db.QueryRow(context.Background(), `
 	SELECT count(*) FROM users;
@@ -30,26 +32,25 @@ func countDB(db *pgx.Conn) (int, error) {
 
 func (ts *RepositoryTestSuite) TestInsertUser() {
 	// Count users in db before creating user
-	before, err := countDB(ts.db)
+	before, err := countUsers(ts.db)
 	ts.NoError(err)
 
 	// Create user repository
 	ur := repository.NewUserRepository(ts.db)
 
 	// Create user
-	dbUser, err := ur.CreateUser(testUser)
+	dbUser, err := ur.CreateUser(mockUser)
 	ts.NoError(err)
 
 	// Count users in db after creating user
-	after, err := countDB(ts.db)
+	after, err := countUsers(ts.db)
 	ts.NoError(err)
 
 	// Assert
-	ts.Greater(dbUser.ID, 0)
 	ts.Greater(after, before)
 	ts.Equal(after, before+1)
 	ts.True(dbUser.CreatedAt.Equal(dbUser.UpdatedAt))
-	ts.Equal(testUser.Email, dbUser.Email)
+	ts.Equal(mockUser.Email, dbUser.Email)
 }
 
 func (ts *RepositoryTestSuite) TestPasswordHash() {
@@ -59,18 +60,18 @@ func (ts *RepositoryTestSuite) TestPasswordHash() {
 	// Update password
 	passwordHash, err := utils.Argon2id.GenerateHash([]byte("password123"), nil)
 	ts.NoError(err)
-	testUser.PasswordHash = passwordHash
+	mockUser.PasswordHash = passwordHash
 
 	// Save user to the db
-	_, err = ur.CreateUser(testUser)
+	_, err = ur.CreateUser(mockUser)
 	ts.NoError(err)
 
 	// Get user
-	dbUser, err := ur.GetUserByEmail(testUser.Email)
+	dbUser, err := ur.GetUserByEmail(mockUser.Email)
 	ts.NoError(err)
 
 	// Assert
-	ts.Equal(testUser.Email, dbUser.Email)
+	ts.Equal(mockUser.Email, dbUser.Email)
 	ts.Equal(passwordHash, dbUser.PasswordHash)
 }
 
@@ -80,15 +81,15 @@ func (ts *RepositoryTestSuite) TestGetUserByEmail() {
 	ur := repository.NewUserRepository(ts.db)
 
 	// Get user
-	dbUser, err := ur.GetUserByEmail(testUser.Email)
+	dbUser, err := ur.GetUserByEmail(mockUser.Email)
 	ts.NoError(err)
 
 	// Assert
-	ts.Equal(testUser.Email, dbUser.Email)
-	ts.Equal(testUser.PasswordHash, dbUser.PasswordHash)
+	ts.Equal(mockUser.Email, dbUser.Email)
+	ts.Equal(mockUser.PasswordHash, dbUser.PasswordHash)
 
 	//Get non-existing user
-	dbUser, err = ur.GetUserByEmail(fmt.Sprintf("non-existing-%s", testUser.Email))
+	dbUser, err = ur.GetUserByEmail(fmt.Sprintf("non-existing-%s", mockUser.Email))
 	ts.Error(err)
 	ts.ErrorIs(err, pgx.ErrNoRows)
 	ts.Nil(dbUser)
@@ -100,17 +101,17 @@ func (ts *RepositoryTestSuite) TestGetUserById() {
 	ur := repository.NewUserRepository(ts.db)
 
 	// Get user
-	dbUser, err := ur.GetUserByEmail(testUser.Email)
+	dbUser, err := ur.GetUserByEmail(mockUser.Email)
 	ts.NoError(err)
 	dbUser, err = ur.GetUserById(dbUser.ID)
 	ts.NoError(err)
 
 	// Assert
-	ts.Equal(testUser.Email, dbUser.Email)
-	ts.Equal(testUser.PasswordHash, dbUser.PasswordHash)
+	ts.Equal(mockUser.Email, dbUser.Email)
+	ts.Equal(mockUser.PasswordHash, dbUser.PasswordHash)
 
 	//Get non-existing user
-	dbUser, err = ur.GetUserByEmail(fmt.Sprintf("%d", testUser.ID+12))
+	dbUser, err = ur.GetUserById(mockUUID)
 	ts.Error(err)
 	ts.ErrorIs(err, pgx.ErrNoRows)
 	ts.Nil(dbUser)

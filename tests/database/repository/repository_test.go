@@ -20,6 +20,7 @@ func (ts *RepositoryTestSuite) SetupTest() {
 	if err != nil {
 		panic((err))
 	}
+	conn.Exec(context.Background(), `TRUNCATE sessions`)
 	conn.Exec(context.Background(), `TRUNCATE users CASCADE`)
 	ts.db = conn
 }

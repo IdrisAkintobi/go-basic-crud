@@ -5,6 +5,7 @@ import "time"
 type Session struct {
 	ID        int       `db:"id"`
 	UserId    string    `db:"userId"`
+	DeviceId  string    `db:"deviceId"`
 	Token     string    `db:"token"`
 	UserAgent string    `db:"userAgent"`
 	IPAddress string    `db:"ipAddress"`
@@ -12,15 +13,21 @@ type Session struct {
 	ExpiresAt time.Time `db:"expiresAt"`
 }
 
+type NewSessionParams struct {
+	UserId, DeviceId, Token, UserAgent, IPAddress string
+	Duration                                      uint
+}
+
 // Constructor function to create a new User with default timestamps
-func NewSession(userId, token, userAgent, ipAddress string, duration uint) *Session {
+func NewSession(params *NewSessionParams) *Session {
 	now := time.Now()
 	return &Session{
-		UserId:    userId,
-		Token:     token,
-		UserAgent: userAgent,
-		IPAddress: ipAddress,
+		UserId:    params.UserId,
+		DeviceId:  params.DeviceId,
+		Token:     params.Token,
+		UserAgent: params.UserAgent,
+		IPAddress: params.IPAddress,
 		CreatedAt: now,
-		ExpiresAt: now.Add(time.Duration(duration) * time.Minute),
+		ExpiresAt: now.Add(time.Duration(params.Duration) * time.Minute),
 	}
 }

@@ -28,6 +28,11 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if loginData.Email == "" || loginData.Password == "" || loginData.DeviceId == "" {
+		utils.SendErrorResponse(w, "email, password, or deviceId can not be empty", http.StatusBadRequest)
+		return
+	}
+
 	reqFingerprint := r.Context().Value(utils.FPCtxKey).(middlewares.UserFingerprint)
 
 	loginData.IPAddress = reqFingerprint.IPAddress

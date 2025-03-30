@@ -36,14 +36,22 @@ func NewSessionService(db *pgx.Conn) *SessionService {
 	}
 }
 
-func (ss *SessionService) CreateSession(userId, userAgent, ipAddress string) (token string, err error) {
+func (ss *SessionService) CreateSession(userId, deviceId, userAgent, ipAddress string) (token string, err error) {
 	randomBytes, err := utils.RandomByte(uint32(ss.tokenLength))
 	if err != nil {
 		return "", fmt.Errorf("internal server error: %w", err)
 	}
 
 	token = base64.URLEncoding.EncodeToString(randomBytes)
-	session := schema.NewSession(userId, token, userAgent, ipAddress, uint(ss.sessionDuration))
+	newSesParams := &schema.NewSessionParams{
+		UserId:    userId,
+		DeviceId:  deviceId,
+		Token:     token,
+		UserAgent: userAgent,
+		IPAddress: ipAddress,
+		Duration:  uint(ss.sessionDuration),
+	}
+	session := schema.NewSession(newSesParams)
 
 	_, err = ss.sr.CreateSession(session)
 	if err != nil {
@@ -58,7 +66,7 @@ func (ss *SessionService) UpdateSession(token string, duration uint) error {
 	tokenHash := utils.Hash(token)
 	expiresAt := time.Now().Add(time.Duration(duration) * time.Minute)
 
-	err := ss.sr.UpdateSession(tokenHash, expiresAt)
+	err := ss.sr.ExtendSession(tokenHash, expiresAt)
 	if err != nil {
 		return fmt.Errorf("failed to update session: %w", err)
 	}

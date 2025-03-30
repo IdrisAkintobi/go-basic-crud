@@ -12,13 +12,21 @@ import (
 
 const (
 	userId    string = "99533d94-b3d7-43a7-972d-d91d81911033"
+	deviceId  string = "4cc10adf-320c-455c-95c3-14830c18676d"
 	token     string = "base64Token=="
 	userAgent string = "Go Test"
 	ipAddress string = "127.0.0.1"
 	duration  uint   = 60
 )
 
-var mockSession = schema.NewSession(userId, token, userAgent, ipAddress, duration)
+var mockSession = schema.NewSession(&schema.NewSessionParams{
+	UserId:    userId,
+	DeviceId:  deviceId,
+	Token:     token,
+	UserAgent: userAgent,
+	IPAddress: ipAddress,
+	Duration:  duration,
+})
 
 func countSessions(db *pgx.Conn) (int, error) {
 	var count int
@@ -69,6 +77,7 @@ func (ts *RepositoryTestSuite) TestFindSession() {
 	ts.Equal(dbSession.UserId, mockSession.UserId)
 	ts.Equal(dbSession.UserAgent, mockSession.UserAgent)
 	ts.Equal(dbSession.IPAddress, mockSession.IPAddress)
+	ts.Equal(dbSession.DeviceId, mockSession.DeviceId)
 }
 
 func (ts *RepositoryTestSuite) TestUpdateSession() {
@@ -81,7 +90,7 @@ func (ts *RepositoryTestSuite) TestUpdateSession() {
 
 	duration := time.Now().Add(time.Hour)
 	// Update session
-	err = sr.UpdateSession(mockSession.Token, duration)
+	err = sr.ExtendSession(mockSession.Token, duration)
 	ts.NoError(err)
 
 	updatedSession, err := sr.FindSession(mockSession.Token)

@@ -3,6 +3,7 @@
 CREATE TABLE sessions (
     id SERIAL PRIMARY KEY,
     userId UUID NOT NULL,
+    deviceId UUID NOT NULL,
     token TEXT UNIQUE NOT NULL,
     userAgent TEXT,
     ipAddress TEXT,

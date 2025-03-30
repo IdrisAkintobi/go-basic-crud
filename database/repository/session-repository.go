@@ -24,11 +24,11 @@ func (r *SessionRepository) CreateSession(sessionData *schema.Session) (*schema.
 	tokenHash := utils.Hash(sessionData.Token)
 
 	row := r.db.QueryRow(context.Background(), `
-	INSERT INTO sessions (userId, token, userAgent, ipAddress, createdAt, expiresAt)
-	values ($1, $2, $3, $4, $5, $6) returning *
-	`, sessionData.UserId, tokenHash, sessionData.UserAgent, sessionData.IPAddress, sessionData.CreatedAt, sessionData.ExpiresAt)
+	INSERT INTO sessions (userId, deviceId, token, userAgent, ipAddress, createdAt, expiresAt)
+	values ($1, $2, $3, $4, $5, $6, $7) returning *
+	`, sessionData.UserId, sessionData.DeviceId, tokenHash, sessionData.UserAgent, sessionData.IPAddress, sessionData.CreatedAt, sessionData.ExpiresAt)
 
-	err := row.Scan(&result.ID, &result.UserId, &result.Token, &result.UserAgent, &result.IPAddress, &result.CreatedAt, &result.ExpiresAt)
+	err := row.Scan(&result.ID, &result.UserId, &result.DeviceId, &result.Token, &result.UserAgent, &result.IPAddress, &result.CreatedAt, &result.ExpiresAt)
 
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (r *SessionRepository) FindSession(token string) (*schema.Session, error) {
 
 	row := r.db.QueryRow(context.Background(), `SELECT * FROM sessions WHERE token = $1`, tokenHash)
 
-	err := row.Scan(&result.ID, &result.UserId, &result.Token, &result.UserAgent, &result.IPAddress, &result.CreatedAt, &result.ExpiresAt)
+	err := row.Scan(&result.ID, &result.UserId, &result.DeviceId, &result.Token, &result.UserAgent, &result.IPAddress, &result.CreatedAt, &result.ExpiresAt)
 
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func (r *SessionRepository) FindSession(token string) (*schema.Session, error) {
 	return &result, nil
 }
 
-func (r *SessionRepository) UpdateSession(token string, expiresAt time.Time) error {
+func (r *SessionRepository) ExtendSession(token string, expiresAt time.Time) error {
 	tokenHash := utils.Hash(token)
 	_, err := r.db.Exec(context.Background(), `UPDATE sessions SET expiresAt = $1 WHERE token = $2`, expiresAt, tokenHash)
 

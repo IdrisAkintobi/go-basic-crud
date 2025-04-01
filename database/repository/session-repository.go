@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
@@ -29,7 +31,6 @@ func (r *SessionRepository) CreateSession(sessionData *schema.Session) (*schema.
 	`, sessionData.UserId, sessionData.DeviceId, tokenHash, sessionData.UserAgent, sessionData.IPAddress, sessionData.CreatedAt, sessionData.ExpiresAt)
 
 	err := row.Scan(&result.ID, &result.UserId, &result.DeviceId, &result.Token, &result.UserAgent, &result.IPAddress, &result.CreatedAt, &result.ExpiresAt)
-
 	if err != nil {
 		return nil, err
 	}
@@ -37,31 +38,83 @@ func (r *SessionRepository) CreateSession(sessionData *schema.Session) (*schema.
 	return &result, nil
 }
 
-func (r *SessionRepository) FindSession(token string) (*schema.Session, error) {
+func (r *SessionRepository) FindSession(tokenHash string) (*schema.Session, error) {
 	var result schema.Session
-	tokenHash := utils.Hash(token)
 
-	row := r.db.QueryRow(context.Background(), `SELECT * FROM sessions WHERE token = $1`, tokenHash)
+	row := r.db.QueryRow(context.Background(), `
+	SELECT id, userId, deviceId, token, userAgent, ipAddress, expiresAt
+	FROM sessions 
+	WHERE token = $1`, tokenHash)
 
-	err := row.Scan(&result.ID, &result.UserId, &result.DeviceId, &result.Token, &result.UserAgent, &result.IPAddress, &result.CreatedAt, &result.ExpiresAt)
-
+	err := row.Scan(&result.ID, &result.UserId, &result.DeviceId, &result.Token, &result.UserAgent, &result.IPAddress, &result.ExpiresAt)
 	if err != nil {
-		return nil, err
+		handleFindSessionError(err)
 	}
 
 	return &result, nil
 }
 
-func (r *SessionRepository) ExtendSession(token string, expiresAt time.Time) error {
-	tokenHash := utils.Hash(token)
-	_, err := r.db.Exec(context.Background(), `UPDATE sessions SET expiresAt = $1 WHERE token = $2`, expiresAt, tokenHash)
-
+func (r *SessionRepository) DeleteExistingDeviceSession(userId, deviceId string) error {
+	_, err := r.db.Exec(context.Background(), `
+	DELETE FROM sessions 
+	WHERE userId = $1 AND deviceId = $2`, userId, deviceId)
 	return err
 }
 
-func (r *SessionRepository) DeleteSession(token string) error {
-	tokenHash := utils.Hash(token)
-	_, err := r.db.Exec(context.Background(), `DELETE FROM sessions WHERE token = $1`, tokenHash)
+func (r *SessionRepository) FindAllSession(userId string) ([]*schema.Session, error) {
+	var sessions []*schema.Session
 
+	rows, err := r.db.Query(context.Background(), `
+	SELECT id, userId, deviceId, token, userAgent, ipAddress, createdAt, expiresAt
+	FROM sessions
+	WHERE userId = $1`, userId)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query for sessions: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var session schema.Session
+		err = rows.Scan(&session.ID, &session.UserId, &session.DeviceId, &session.Token, &session.UserAgent, &session.IPAddress, &session.CreatedAt, &session.ExpiresAt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan session row: %w", err)
+		}
+
+		sessions = append(sessions, &session)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate sessions: %w", err)
+	}
+
+	return sessions, nil
+}
+
+func (r *SessionRepository) ExtendSession(tokenHash string, expiresAt time.Time) error {
+	_, err := r.db.Exec(context.Background(), `UPDATE sessions SET expiresAt = $1 WHERE token = $2`, expiresAt, tokenHash)
 	return err
+}
+
+func (r *SessionRepository) CountUserActiveSessions(userId string) (int, error) {
+	var count int
+	row := r.db.QueryRow(context.Background(), `SELECT COUNT(userId) FROM sessions WHERE userId = $1`, userId)
+	err := row.Scan(&count)
+	return count, err
+}
+
+func (r *SessionRepository) DeleteSessionById(id int) error {
+	_, err := r.db.Exec(context.Background(), `DELETE FROM sessions WHERE id = $1`, id)
+	return err
+}
+
+func (r *SessionRepository) DeleteSessionByToken(tokenHash string) error {
+	_, err := r.db.Exec(context.Background(), `DELETE FROM sessions WHERE token = $1`, tokenHash)
+	return err
+}
+
+func handleFindSessionError(err error) (*schema.Session, error) {
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	return nil, err
 }

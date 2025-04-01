@@ -13,7 +13,9 @@ import (
 const (
 	userId    string = "99533d94-b3d7-43a7-972d-d91d81911033"
 	deviceId  string = "4cc10adf-320c-455c-95c3-14830c18676d"
+	deviceId2 string = "4cc10adf-320c-455c-95c3-14830c18676d"
 	token     string = "base64Token=="
+	token2    string = "base64Token2=="
 	userAgent string = "Go Test"
 	ipAddress string = "127.0.0.1"
 	duration  uint   = 60
@@ -23,6 +25,15 @@ var mockSession = schema.NewSession(&schema.NewSessionParams{
 	UserId:    userId,
 	DeviceId:  deviceId,
 	Token:     token,
+	UserAgent: userAgent,
+	IPAddress: ipAddress,
+	Duration:  duration,
+})
+
+var mockSession2 = schema.NewSession(&schema.NewSessionParams{
+	UserId:    userId,
+	DeviceId:  deviceId2,
+	Token:     token2,
 	UserAgent: userAgent,
 	IPAddress: ipAddress,
 	Duration:  duration,
@@ -70,7 +81,8 @@ func (ts *RepositoryTestSuite) TestFindSession() {
 	_, err := sr.CreateSession(mockSession)
 	ts.NoError(err)
 
-	dbSession, err := sr.FindSession(mockSession.Token)
+	tokenHash := utils.Hash(mockSession.Token)
+	dbSession, err := sr.FindSession(tokenHash)
 	ts.NoError(err)
 
 	// Assert
@@ -89,11 +101,12 @@ func (ts *RepositoryTestSuite) TestUpdateSession() {
 	ts.NoError(err)
 
 	duration := time.Now().Add(time.Hour)
+	tokenHash := utils.Hash(mockSession.Token)
 	// Update session
-	err = sr.ExtendSession(mockSession.Token, duration)
+	err = sr.ExtendSession(tokenHash, duration)
 	ts.NoError(err)
 
-	updatedSession, err := sr.FindSession(mockSession.Token)
+	updatedSession, err := sr.FindSession(tokenHash)
 	ts.NoError(err)
 
 	// Assert
@@ -104,6 +117,58 @@ func (ts *RepositoryTestSuite) TestUpdateSession() {
 	ts.Equal(updatedSession.ExpiresAt.Compare(dbSession.ExpiresAt), +1)
 }
 
+func (ts *RepositoryTestSuite) TestCountActiveSession() {
+	// Create session repository
+	sr := repository.NewSessionRepository(ts.db)
+
+	// Count active session
+	beforeCreate, err := sr.CountUserActiveSessions(mockSession.UserId)
+	ts.NoError(err)
+
+	// Create session
+	_, err = sr.CreateSession(mockSession)
+	ts.NoError(err)
+
+	// Count session in db after creating session
+	firstCreate, err := sr.CountUserActiveSessions(mockSession.UserId)
+	ts.NoError(err)
+
+	// Create another session
+	_, err = sr.CreateSession(mockSession2)
+	ts.NoError(err)
+
+	// Count session in db after creating session
+	secondCreate, err := sr.CountUserActiveSessions(mockSession.UserId)
+	ts.NoError(err)
+
+	// Assert
+	ts.Greater(firstCreate, beforeCreate)
+	ts.Greater(secondCreate, firstCreate)
+	ts.Equal(firstCreate, 1)
+	ts.Equal(secondCreate, 2)
+}
+
+func (ts *RepositoryTestSuite) TestFindAllSession() {
+	// Create session repository
+	sr := repository.NewSessionRepository(ts.db)
+
+	// Create session
+	_, err := sr.CreateSession(mockSession)
+	ts.NoError(err)
+
+	// Create another session
+	_, err = sr.CreateSession(mockSession2)
+	ts.NoError(err)
+
+	// Count session in db after creating session
+	allSessions, err := sr.FindAllSession(mockSession.UserId)
+	ts.NoError(err)
+
+	// Assert
+	ts.Equal(allSessions[0].UserId, mockSession.UserId)
+	ts.Equal(allSessions[1].UserId, mockSession2.UserId)
+}
+
 func (ts *RepositoryTestSuite) TestDeleteSession() {
 	// Count session in db before creating session
 	beforeCreate, err := countSessions(ts.db)
@@ -112,25 +177,46 @@ func (ts *RepositoryTestSuite) TestDeleteSession() {
 	// Create session repository
 	sr := repository.NewSessionRepository(ts.db)
 
-	// Create session
-	_, err = sr.CreateSession(mockSession)
+	// Create first session
+	firstSession, err := sr.CreateSession(mockSession)
 	ts.NoError(err)
 
-	// Count session in db after creating session
-	afterCreate, err := countSessions(ts.db)
+	// Count session in db after first session creation
+	firstCreateCount, err := countSessions(ts.db)
 	ts.NoError(err)
 
-	// Delete session
-	err = sr.DeleteSession(mockSession.Token)
+	// Create second session
+	_, err = sr.CreateSession(mockSession2)
 	ts.NoError(err)
 
-	// Count session in db after creating session
-	afterDelete, err := countSessions(ts.db)
+	// Count session in db after second session creation
+	secondCreateCount, err := countSessions(ts.db)
+	ts.NoError(err)
+
+	// Delete first session by id
+	err = sr.DeleteSessionById(firstSession.ID)
+	ts.NoError(err)
+
+	// Count session in db after deleting first session
+	afterFirstDelete, err := countSessions(ts.db)
+	ts.NoError(err)
+
+	// Delete second session by token
+	tokenHash := utils.Hash(mockSession2.Token)
+	err = sr.DeleteSessionByToken(tokenHash)
+	ts.NoError(err)
+
+	// Count session in db after deleting first session
+	afterSecondDelete, err := countSessions(ts.db)
 	ts.NoError(err)
 
 	// Assert
-	_, err = sr.FindSession(mockSession.Token)
+	_, err = sr.FindSession(utils.Hash(mockSession.Token))
 	ts.Error(err)
-	ts.Greater(afterCreate, beforeCreate)
-	ts.Equal(beforeCreate, afterDelete)
+
+	ts.Greater(firstCreateCount, beforeCreate)
+	ts.Greater(secondCreateCount, firstCreateCount)
+	ts.Equal(secondCreateCount, 2)
+	ts.Less(afterSecondDelete, afterFirstDelete)
+	ts.Equal(afterSecondDelete, beforeCreate)
 }

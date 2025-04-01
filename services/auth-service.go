@@ -42,3 +42,11 @@ func (as *AuthService) SignIn(cred *dto.AuthLoginReqDTO) (token string, err erro
 
 	return as.ss.CreateSession(user.ID, cred.DeviceId, cred.UserAgent, cred.IPAddress)
 }
+
+func (as *AuthService) LogOut(tokenId int) error {
+	err := as.ss.DeleteSessionById(tokenId)
+	if err != nil {
+		return fmt.Errorf("error deleting session: %w", err)
+	}
+	return nil
+}

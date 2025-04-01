@@ -46,5 +46,17 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	resp := dto.AuthLoginResDTO{Token: token}
 
-	utils.SendSuccessResponse(w, resp, http.StatusCreated)
+	utils.SendSuccessResponse(w, resp, http.StatusOK)
+}
+
+func (ah *AuthHandler) LogOut(w http.ResponseWriter, r *http.Request) {
+	authData := r.Context().Value(utils.AuthUserCtxKey).(*middlewares.AuthData)
+
+	err := ah.as.LogOut(authData.SessionId)
+	if err != nil {
+		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	utils.SendSuccessResponse(w, nil, http.StatusOK)
 }

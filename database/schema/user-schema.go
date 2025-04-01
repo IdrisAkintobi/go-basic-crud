@@ -3,7 +3,7 @@ package schema
 import "time"
 
 type User struct {
-	ID           int       `db:"id"`
+	ID           string    `db:"id"`
 	Email        string    `db:"email"`
 	DOB          time.Time `db:"dob"`
 	FirstName    string    `db:"firstName"`

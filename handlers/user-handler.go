@@ -23,12 +23,14 @@ func (uh *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&userData)
 	if err != nil {
-		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		utils.SendErrorResponse(w, "error parsing request body: "+err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	newUser, err := uh.us.RegisterUser(&userData)
 	if err != nil {
 		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	utils.SendSuccessResponse(w, newUser, http.StatusCreated)

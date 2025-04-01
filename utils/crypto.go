@@ -3,7 +3,8 @@ package utils
 import (
 	"bytes"
 	"crypto/rand"
-	"errors"
+	"crypto/sha256"
+	"encoding/base64"
 	"runtime"
 
 	"golang.org/x/crypto/argon2"
@@ -36,7 +37,7 @@ func newArgon2idHash(time, saltLen uint32, memory uint32, threads uint8, keyLen 
 	}
 }
 
-func randomSecret(length uint32) ([]byte, error) {
+func RandomByte(length uint32) ([]byte, error) {
 	secret := make([]byte, length)
 
 	_, err := rand.Read(secret)
@@ -54,7 +55,7 @@ func (a *argon2idConf) GenerateHash(password, salt []byte) ([]byte, error) {
 	var err error
 	// If salt is not provided generate a salt of the configured salt length.
 	if len(salt) == 0 {
-		salt, err = randomSecret(a.saltLen)
+		salt, err = RandomByte(a.saltLen)
 	}
 	if err != nil {
 		return nil, err
@@ -66,19 +67,20 @@ func (a *argon2idConf) GenerateHash(password, salt []byte) ([]byte, error) {
 }
 
 // Compare generated hash with store hash.
-func (a *argon2idConf) Compare(passwordHash, password []byte) error {
+func (a *argon2idConf) Compare(passwordHash, password []byte) (bool, error) {
 	salt := passwordHash[:a.saltLen]
 	// Generate hash for comparison.
 	hash, err := a.GenerateHash(password, salt)
 	if err != nil {
-		return err
+		return false, err
 	}
 	// Compare the generated hash with the stored hash.
-	// If they don't match return error.
-	if !bytes.Equal(passwordHash, hash[a.saltLen:]) {
-		return errors.New("hash doesn't match")
-	}
-	return nil
+	return bytes.Equal(passwordHash, hash), nil
+}
+
+func Hash(text string) string {
+	hash := sha256.Sum256([]byte(text))
+	return base64.URLEncoding.EncodeToString(hash[:])
 }
 
 var Argon2id = newArgon2idHash(iteration, saltLength, memory, uint8(runtime.NumCPU()), hashKeyLength)

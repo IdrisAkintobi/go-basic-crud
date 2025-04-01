@@ -4,7 +4,7 @@ A basic CRUD application written in Go.
 
 ## Overview
 
-This project demonstrates how to build a simple CRUD API for user management and authentication using Go.
+This project demonstrates how to build a simple CRUD API for user management and authentication using Go. The application uses PostgreSQL as the database and includes basic authentication features. Users can only have five active sessions.
 
 ## Prerequisites
 
@@ -77,7 +77,9 @@ After running the application, you can use your favorite HTTP client (e.g., [Pos
 
 ## API Endpoints
 
-- `POST /` - Create a new user
+- `POST /register` - Create a new user
+- `POST /login` - Login user
+- `POST /logout` - Logout user
 
 ## License
 

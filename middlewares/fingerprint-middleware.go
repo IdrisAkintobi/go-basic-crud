@@ -17,7 +17,7 @@ func GetUserFingerprint(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		// Create a new UserFingerprint instance
-		fingerprint := UserFingerprint{
+		fingerprint := &UserFingerprint{
 			IPAddress: r.RemoteAddr,
 			UserAgent: r.UserAgent(),
 		}

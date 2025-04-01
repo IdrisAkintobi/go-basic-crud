@@ -33,7 +33,7 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reqFingerprint := r.Context().Value(utils.FPCtxKey).(middlewares.UserFingerprint)
+	reqFingerprint := r.Context().Value(utils.FPCtxKey).(*middlewares.UserFingerprint)
 
 	loginData.IPAddress = reqFingerprint.IPAddress
 	loginData.UserAgent = reqFingerprint.UserAgent

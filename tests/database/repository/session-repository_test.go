@@ -211,8 +211,9 @@ func (ts *RepositoryTestSuite) TestDeleteSession() {
 	ts.NoError(err)
 
 	// Assert
-	_, err = sr.FindSession(utils.Hash(mockSession.Token))
-	ts.Error(err)
+	dbSession, err := sr.FindSession(utils.Hash(mockSession.Token))
+	ts.Nil(dbSession)
+	ts.Nil(err)
 
 	ts.Greater(firstCreateCount, beforeCreate)
 	ts.Greater(secondCreateCount, firstCreateCount)

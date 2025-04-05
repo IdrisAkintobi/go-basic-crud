@@ -48,7 +48,7 @@ func (r *SessionRepository) FindSession(tokenHash string) (*schema.Session, erro
 
 	err := row.Scan(&result.ID, &result.UserId, &result.DeviceId, &result.Token, &result.UserAgent, &result.IPAddress, &result.ExpiresAt)
 	if err != nil {
-		handleFindSessionError(err)
+		return handleFindSessionError(err)
 	}
 
 	return &result, nil

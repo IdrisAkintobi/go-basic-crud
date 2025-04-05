@@ -97,7 +97,7 @@ func (ss *SessionService) FindSession(token string) (*schema.Session, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to find session: %w", err)
 	}
-	return session, nil
+	return session, err
 
 }
 

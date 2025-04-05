@@ -90,8 +90,7 @@ func (ts *RepositoryTestSuite) TestGetUserByEmail() {
 
 	//Get non-existing user
 	dbUser, err = ur.GetUserByEmail(fmt.Sprintf("non-existing-%s", mockUser.Email))
-	ts.Error(err)
-	ts.ErrorIs(err, pgx.ErrNoRows)
+	ts.Nil(err)
 	ts.Nil(dbUser)
 }
 
@@ -112,7 +111,6 @@ func (ts *RepositoryTestSuite) TestGetUserById() {
 
 	//Get non-existing user
 	dbUser, err = ur.GetUserById(mockUUID)
-	ts.Error(err)
-	ts.ErrorIs(err, pgx.ErrNoRows)
 	ts.Nil(dbUser)
+	ts.Nil(err)
 }

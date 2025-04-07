@@ -41,12 +41,15 @@ func main() {
 	uh := handlers.NewUserHandler(conn)
 	ah := handlers.NewAuthHandler(conn)
 
+	//create auth middleware
+	authMiddleware := middlewares.NewAuthMiddleware(conn)
+
 	// Setup routers
 	r := chi.NewRouter()
 	r.Use(httprate.LimitByIP(100, 1*time.Minute), middleware.CleanPath, middleware.StripSlashes, middleware.Logger, middleware.Recoverer)
 	r.Post("/register", uh.RegisterUser)
 	r.With(middlewares.GetUserFingerprint).Post("/login", ah.Login)
-	r.With(middlewares.NewAuthMiddleware(conn)).Post("/logout", ah.LogOut)
+	r.With(authMiddleware.Register()).Post("/logout", ah.LogOut)
 
 	// Start server
 	fmt.Printf("Server starting on %v\n", PORT)

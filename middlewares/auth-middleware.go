@@ -52,6 +52,13 @@ func (um *AuthMiddleware) Register() func(http.Handler) http.Handler {
 				return
 			}
 
+			// Check if session needs to be refreshed
+			// If expiration is within the refresh window, extend the session
+			timeRemaining := time.Until(session.ExpiresAt)
+			if timeRemaining < um.ss.SessionRefreshWindow {
+				_ = um.ss.ExtendSession(token)
+			}
+
 			// Store auth data in context
 			authData := &AuthData{
 				SessionId: session.ID,

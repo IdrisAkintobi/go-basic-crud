@@ -18,12 +18,18 @@ import (
 type SessionService struct {
 	sr                                       *repository.SessionRepository
 	sessionDuration, tokenLength, maxSession int
+	SessionRefreshWindow                     time.Duration
 }
 
 func NewSessionService(db *pgx.Conn) *SessionService {
 	sd, err := strconv.Atoi(os.Getenv("SESSION_DURATION"))
 	if err != nil {
 		panic("Invalid SESSION_DURATION: " + err.Error())
+	}
+
+	srw, err := strconv.Atoi(os.Getenv("SESSION_REFRESH_WINDOW"))
+	if err != nil {
+		panic("Invalid SESSION_REFRESH_WINDOW: " + err.Error())
 	}
 
 	tl, err := strconv.Atoi(os.Getenv("TOKEN_LENGTH"))
@@ -37,10 +43,11 @@ func NewSessionService(db *pgx.Conn) *SessionService {
 	}
 
 	return &SessionService{
-		sr:              repository.NewSessionRepository(db),
-		sessionDuration: sd,
-		tokenLength:     tl,
-		maxSession:      mxS,
+		sr:                   repository.NewSessionRepository(db),
+		sessionDuration:      sd,
+		SessionRefreshWindow: time.Minute * time.Duration(srw),
+		tokenLength:          tl,
+		maxSession:           mxS,
 	}
 }
 
@@ -101,9 +108,9 @@ func (ss *SessionService) FindSession(token string) (*schema.Session, error) {
 
 }
 
-func (ss *SessionService) UpdateSession(token string, duration uint) error {
+func (ss *SessionService) ExtendSession(token string) error {
 	tokenHash := utils.Hash(token)
-	expiresAt := time.Now().Add(time.Duration(duration) * time.Minute)
+	expiresAt := time.Now().Add(time.Duration(ss.sessionDuration) * time.Minute)
 
 	err := ss.sr.ExtendSession(tokenHash, expiresAt)
 	if err != nil {

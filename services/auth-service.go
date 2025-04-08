@@ -50,3 +50,24 @@ func (as *AuthService) LogOut(tokenId int) error {
 	}
 	return nil
 }
+
+func (as *AuthService) WhoAmI(userId string) (*dto.WhoAmIResDTO, error) {
+	user, err := as.ur.GetUserById(userId)
+	if err != nil {
+		return nil, fmt.Errorf("error getting user: %w", err)
+	}
+	if user == nil {
+		return nil, nil
+	}
+
+	userData := &dto.WhoAmIResDTO{
+		ID:        user.ID,
+		Email:     user.Email,
+		DOB:       user.DOB.Format(utils.DATE_LAYOUT),
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+	}
+
+	return userData, nil
+
+}

@@ -16,9 +16,18 @@ type AuthData struct {
 	UserID    string
 }
 
+type AuthMiddleware struct {
+	ss *services.SessionService
+}
+
+func NewAuthMiddleware(db *pgx.Conn) *AuthMiddleware {
+	return &AuthMiddleware{
+		ss: services.NewSessionService(db),
+	}
+}
+
 // NewAuthMiddleware returns a middleware function directly
-func NewAuthMiddleware(db *pgx.Conn) func(http.Handler) http.Handler {
-	ss := services.NewSessionService(db)
+func (um *AuthMiddleware) Register() func(http.Handler) http.Handler {
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +42,7 @@ func NewAuthMiddleware(db *pgx.Conn) func(http.Handler) http.Handler {
 			token := strings.TrimPrefix(authHeader, "Bearer ")
 
 			// Validate token
-			session, err := ss.FindSession(token)
+			session, err := um.ss.FindSession(token)
 			if err != nil && err != pgx.ErrNoRows {
 				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return
@@ -41,6 +50,13 @@ func NewAuthMiddleware(db *pgx.Conn) func(http.Handler) http.Handler {
 			if session == nil || session.ExpiresAt.Before(time.Now()) {
 				http.Error(w, "Unauthorized - Invalid token", http.StatusUnauthorized)
 				return
+			}
+
+			// Check if session needs to be refreshed
+			// If expiration is within the refresh window, extend the session
+			timeRemaining := time.Until(session.ExpiresAt)
+			if timeRemaining < um.ss.SessionRefreshWindow {
+				_ = um.ss.ExtendSession(token)
 			}
 
 			// Store auth data in context

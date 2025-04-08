@@ -60,3 +60,19 @@ func (ah *AuthHandler) LogOut(w http.ResponseWriter, r *http.Request) {
 
 	utils.SendSuccessResponse(w, nil, http.StatusOK)
 }
+
+func (ah *AuthHandler) WhoAmI(w http.ResponseWriter, r *http.Request) {
+	authData := r.Context().Value(utils.AuthUserCtxKey).(*middlewares.AuthData)
+
+	userData, err := ah.as.WhoAmI(authData.UserID)
+	if err != nil {
+		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if userData == nil {
+		utils.SendErrorResponse(w, "user not found", http.StatusNotFound)
+		return
+	}
+
+	utils.SendSuccessResponse(w, userData, http.StatusOK)
+}

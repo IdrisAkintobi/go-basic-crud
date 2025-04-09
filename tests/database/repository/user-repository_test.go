@@ -30,7 +30,7 @@ func countUsers(db *pgx.Conn) (int, error) {
 	return count, err
 }
 
-func (ts *RepositoryTestSuite) TestInsertUser() {
+func (ts *RepositoryTestSuite) TestCreateUser() {
 	// Count users in db before creating user
 	before, err := countUsers(ts.db)
 	ts.NoError(err)
@@ -76,7 +76,7 @@ func (ts *RepositoryTestSuite) TestPasswordHash() {
 }
 
 func (ts *RepositoryTestSuite) TestGetUserByEmail() {
-	ts.TestInsertUser()
+	ts.TestCreateUser()
 	// Create user repository
 	ur := repository.NewUserRepository(ts.db)
 
@@ -95,7 +95,7 @@ func (ts *RepositoryTestSuite) TestGetUserByEmail() {
 }
 
 func (ts *RepositoryTestSuite) TestGetUserById() {
-	ts.TestInsertUser()
+	ts.TestCreateUser()
 	// Create user repository
 	ur := repository.NewUserRepository(ts.db)
 

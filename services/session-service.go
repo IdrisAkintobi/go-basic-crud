@@ -136,3 +136,11 @@ func (ss *SessionService) DeleteSessionById(id int) error {
 	}
 	return nil
 }
+
+func (ss *SessionService) ClearUserSession(userId string) error {
+	err := ss.sr.ClearUserSession(userId)
+	if err != nil {
+		return fmt.Errorf("failed to clear user session: %w", err)
+	}
+	return nil
+}

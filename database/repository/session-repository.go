@@ -112,6 +112,11 @@ func (r *SessionRepository) DeleteSessionByToken(tokenHash string) error {
 	return err
 }
 
+func (r *SessionRepository) ClearUserSession(userId string) error {
+	_, err := r.db.Exec(context.Background(), `DELETE FROM sessions WHERE userId = $1`, userId)
+	return err
+}
+
 func handleFindSessionError(err error) (*schema.Session, error) {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil

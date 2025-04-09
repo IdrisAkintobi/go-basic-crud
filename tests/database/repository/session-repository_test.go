@@ -221,3 +221,46 @@ func (ts *RepositoryTestSuite) TestDeleteSession() {
 	ts.Less(afterSecondDelete, afterFirstDelete)
 	ts.Equal(afterSecondDelete, beforeCreate)
 }
+
+func (ts *RepositoryTestSuite) TestClearUserSession() {
+	// Count session in db before creating session
+	beforeCreate, err := countSessions(ts.db)
+	ts.NoError(err)
+
+	// Create session repository
+	sr := repository.NewSessionRepository(ts.db)
+
+	// Create first session
+	_, err = sr.CreateSession(mockSession)
+	ts.NoError(err)
+
+	// Count session in db after first session creation
+	firstCreateCount, err := countSessions(ts.db)
+	ts.NoError(err)
+
+	// Create second session
+	_, err = sr.CreateSession(mockSession2)
+	ts.NoError(err)
+
+	// Count session in db after second session creation
+	secondCreateCount, err := countSessions(ts.db)
+	ts.NoError(err)
+
+	// Clear user session
+	err = sr.ClearUserSession(mockSession.UserId)
+	ts.NoError(err)
+
+	// Count session after clearing
+	afterClearing, err := countSessions(ts.db)
+	ts.NoError(err)
+
+	// Assert
+	dbSession, err := sr.FindSession(utils.Hash(mockSession.Token))
+	ts.Nil(dbSession)
+	ts.Nil(err)
+
+	ts.Greater(firstCreateCount, beforeCreate)
+	ts.Greater(secondCreateCount, firstCreateCount)
+	ts.Equal(secondCreateCount, 2)
+	ts.Equal(beforeCreate, afterClearing)
+}

@@ -2,6 +2,9 @@
 include .env
 export $(shell sed 's/=.*//' .env)
 
+# Directory to store GeoIP data
+GEOIP_DIR=geo2ip-data
+GEOIP_WRK_DIR=geo2ip-data/wrk
 POSTGRES_CONTAINER=postgres-container
 
 # Check if goose is installed, and show instructions if not
@@ -33,8 +36,20 @@ db.test.prepare: check-goose guard-TEST_DATABASE_NAME guard-TEST_DATABASE_URL
 test: db.test.prepare
 	go test -v ./tests/...
 
+.PHONY: test db.test.prepare db.test.clean check-goose
+
 # Cleanup test database after tests
 db.test.clean: 
 	@ docker exec $(POSTGRES_CONTAINER) dropdb -U ${DB_USER} ${TEST_DATABASE_NAME} || true
 
-.PHONY: test db.test.prepare db.test.clean check-goose
+check-tools:
+	@command -v curl >/dev/null 2>&1 || { echo "Error: curl is not installed."; exit 1; }
+	@command -v gunzip >/dev/null 2>&1 || { echo "Error: gunzip is not installed."; exit 1; }
+
+geoip.download: check-tools guard-GEO21P_ACCOUNT_ID guard-GEO21P_LICENSE_KEY
+	@ mkdir -p $(GEOIP_DIR) && mkdir -p $(GEOIP_WRK_DIR)
+	@ curl -o $(GEOIP_WRK_DIR)/GeoLite2-City.mmdb.tar.gz -L -u ${GEO21P_ACCOUNT_ID}:${GEO21P_LICENSE_KEY} \
+		'https://download.maxmind.com/geoip/databases/GeoLite2-City/download?suffix=tar.gz'
+	@ tar -xzf $(GEOIP_WRK_DIR)/GeoLite2-City.mmdb.tar.gz -C $(GEOIP_WRK_DIR)
+	@ find $(GEOIP_WRK_DIR) -name '*.mmdb' -exec mv {} $(GEOIP_DIR)/GeoLite2-City.mmdb \;
+	@ rm -rf $(GEOIP_WRK_DIR)

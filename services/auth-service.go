@@ -11,14 +11,16 @@ import (
 )
 
 type AuthService struct {
-	ur *repository.UserRepository
-	ss *SessionService
+	ur   *repository.UserRepository
+	ss   *SessionService
+	g2ip *Geo2IPService
 }
 
 func NewAuthService(db *pgx.Conn) *AuthService {
 	return &AuthService{
-		ur: repository.NewUserRepository(db),
-		ss: NewSessionService(db),
+		ur:   repository.NewUserRepository(db),
+		ss:   NewSessionService(db),
+		g2ip: NewGeo2IPService(),
 	}
 }
 
@@ -69,5 +71,32 @@ func (as *AuthService) WhoAmI(userId string) (*dto.WhoAmIResDTO, error) {
 	}
 
 	return userData, nil
+
+}
+
+func (as *AuthService) GetActiveSessions(userId string) ([]*dto.ActiveSessionsDTO, error) {
+	allSession, err := as.ss.FindAllActiveSession(userId)
+	if err != nil {
+		return nil, fmt.Errorf("error getting all user session: \n%v", err)
+	}
+
+	if allSession == nil {
+		return []*dto.ActiveSessionsDTO{}, nil
+	}
+
+	var result []*dto.ActiveSessionsDTO
+
+	for _, session := range allSession {
+		location := as.g2ip.GetIPLocation(session.IPAddress)
+		result = append(result, &dto.ActiveSessionsDTO{
+			ID:        session.ID,
+			UserAgent: session.UserAgent,
+			IPAddress: session.IPAddress,
+			Location:  location,
+			CreatedAt: session.CreatedAt,
+		})
+	}
+
+	return result, nil
 
 }

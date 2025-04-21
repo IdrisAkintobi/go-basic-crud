@@ -1,5 +1,7 @@
 package dto
 
+import "time"
+
 type AuthLoginReqDTO struct {
 	Email     string `json:"email"`
 	Password  string `json:"password"`
@@ -18,4 +20,12 @@ type WhoAmIResDTO struct {
 	DOB       string `json:"dob"`
 	FirstName string `json:"firstName"`
 	LastName  string `json:"lastName"`
+}
+
+type ActiveSessionsDTO struct {
+	ID        int       `json:"id"`
+	UserAgent string    `json:"userAgent"`
+	IPAddress string    `json:"ipAddress"`
+	Location  string    `json:"location,omitempty"`
+	CreatedAt time.Time `json:"createdAt"`
 }

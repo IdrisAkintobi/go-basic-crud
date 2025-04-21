@@ -28,13 +28,19 @@ func (ah *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if loginData.Email == "" || loginData.Password == "" || loginData.DeviceId == "" {
-		utils.SendErrorResponse(w, "email, password, or deviceId can not be empty", http.StatusBadRequest)
+	if loginData.Email == "" || loginData.Password == "" {
+		utils.SendErrorResponse(w, "email and password can not be empty", http.StatusBadRequest)
 		return
 	}
 
 	reqFingerprint := r.Context().Value(utils.FPCtxKey).(*middlewares.UserFingerprint)
 
+	if reqFingerprint.DeviceId == "" {
+		utils.SendErrorResponse(w, "device id must be passed in the header", http.StatusBadRequest)
+		return
+	}
+
+	loginData.DeviceId = reqFingerprint.DeviceId
 	loginData.IPAddress = reqFingerprint.IPAddress
 	loginData.UserAgent = reqFingerprint.UserAgent
 
@@ -75,4 +81,16 @@ func (ah *AuthHandler) WhoAmI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SendSuccessResponse(w, userData, http.StatusOK)
+}
+
+func (ah *AuthHandler) GetActiveSessions(w http.ResponseWriter, r *http.Request) {
+	authData := r.Context().Value(utils.AuthUserCtxKey).(*middlewares.AuthData)
+
+	userSessions, err := ah.as.GetActiveSessions(authData.UserID)
+	if err != nil {
+		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	utils.SendSuccessResponse(w, userSessions, http.StatusOK)
 }

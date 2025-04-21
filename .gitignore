@@ -28,4 +28,6 @@ go.work
 .env
 test.env
 
+geo2ip-data/
+
 # End of https://www.toptal.com/developers/gitignore/api/go

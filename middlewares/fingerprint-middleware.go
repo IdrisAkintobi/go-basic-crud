@@ -11,6 +11,7 @@ import (
 type UserFingerprint struct {
 	IPAddress string
 	UserAgent string
+	DeviceId  string
 }
 
 // GetUserFingerprint is a middleware that captures user identification details
@@ -25,6 +26,7 @@ func GetUserFingerprint(next http.Handler) http.Handler {
 		fingerprint := &UserFingerprint{
 			IPAddress: ip,
 			UserAgent: r.UserAgent(),
+			DeviceId:  r.Header.Get("X-DeviceID"),
 		}
 
 		ctx := context.WithValue(r.Context(), utils.FPCtxKey, fingerprint)

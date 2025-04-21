@@ -61,13 +61,13 @@ func (r *SessionRepository) DeleteExistingDeviceSession(userId, deviceId string)
 	return err
 }
 
-func (r *SessionRepository) FindAllSession(userId string) ([]*schema.Session, error) {
+func (r *SessionRepository) FindActiveSession(userId string) ([]*schema.Session, error) {
 	var sessions []*schema.Session
 
 	rows, err := r.db.Query(context.Background(), `
 	SELECT id, userId, deviceId, token, userAgent, ipAddress, createdAt, expiresAt
 	FROM sessions
-	WHERE userId = $1`, userId)
+	WHERE userId = $1 AND expiresAt > NOW()`, userId)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query for sessions: %w", err)
 	}
@@ -97,7 +97,7 @@ func (r *SessionRepository) ExtendSession(tokenHash string, expiresAt time.Time)
 
 func (r *SessionRepository) CountUserActiveSessions(userId string) (int, error) {
 	var count int
-	row := r.db.QueryRow(context.Background(), `SELECT COUNT(userId) FROM sessions WHERE userId = $1`, userId)
+	row := r.db.QueryRow(context.Background(), `SELECT COUNT(*) FROM sessions WHERE userId = $1 AND expiresAt > NOW()`, userId)
 	err := row.Scan(&count)
 	return count, err
 }

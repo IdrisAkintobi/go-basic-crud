@@ -108,6 +108,10 @@ func (ss *SessionService) FindSession(token string) (*schema.Session, error) {
 
 }
 
+func (ss *SessionService) FindAllActiveSession(userId string) ([]*schema.Session, error) {
+	return ss.sr.FindActiveSession(userId)
+}
+
 func (ss *SessionService) ExtendSession(token string) error {
 	tokenHash := utils.Hash(token)
 	expiresAt := time.Now().Add(time.Duration(ss.sessionDuration) * time.Minute)

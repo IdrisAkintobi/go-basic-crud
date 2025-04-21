@@ -161,7 +161,7 @@ func (ts *RepositoryTestSuite) TestFindAllSession() {
 	ts.NoError(err)
 
 	// Count session in db after creating session
-	allSessions, err := sr.FindAllSession(mockSession.UserId)
+	allSessions, err := sr.FindActiveSession(mockSession.UserId)
 	ts.NoError(err)
 
 	// Assert

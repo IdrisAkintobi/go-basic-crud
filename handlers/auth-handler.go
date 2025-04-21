@@ -76,3 +76,15 @@ func (ah *AuthHandler) WhoAmI(w http.ResponseWriter, r *http.Request) {
 
 	utils.SendSuccessResponse(w, userData, http.StatusOK)
 }
+
+func (ah *AuthHandler) GetActiveSessions(w http.ResponseWriter, r *http.Request) {
+	authData := r.Context().Value(utils.AuthUserCtxKey).(*middlewares.AuthData)
+
+	userSessions, err := ah.as.GetActiveSessions(authData.UserID)
+	if err != nil {
+		utils.SendErrorResponse(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	utils.SendSuccessResponse(w, userSessions, http.StatusOK)
+}

@@ -49,7 +49,8 @@ func main() {
 	r.Use(httprate.LimitByIP(100, 1*time.Minute), middleware.CleanPath, middleware.StripSlashes, middleware.Logger, middleware.Recoverer)
 	r.Post("/register", uh.RegisterUser)
 	r.With(middlewares.GetUserFingerprint).Post("/login", ah.Login)
-	r.With(authMiddleware.Register()).Post("/whoami", ah.WhoAmI)
+	r.With(authMiddleware.Register()).Get("/whoami", ah.WhoAmI)
+	r.With(authMiddleware.Register()).Get("/active-sessions", ah.GetActiveSessions)
 	r.With(authMiddleware.Register()).Post("/logout", ah.LogOut)
 
 	// Start server

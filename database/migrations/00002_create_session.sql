@@ -8,7 +8,8 @@ CREATE TABLE sessions (
     userAgent TEXT,
     ipAddress TEXT,
     createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expiresAt TIMESTAMP NOT NULL
+    expiresAt TIMESTAMP NOT NULL,
+    CONSTRAINT unique_user_device UNIQUE (userId, deviceId)
 );
 
 CREATE INDEX idx_sessions_userId ON sessions(userId);

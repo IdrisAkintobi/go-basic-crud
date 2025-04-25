@@ -6,16 +6,15 @@ import (
 
 	"github.com/IdrisAkintobi/go-basic-crud/database/repository"
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
-	"github.com/IdrisAkintobi/go-basic-crud/utils"
 	"github.com/jackc/pgx/v5"
 )
 
 const (
 	userId    string = "99533d94-b3d7-43a7-972d-d91d81911033"
 	deviceId  string = "4cc10adf-320c-455c-95c3-14830c18676d"
-	deviceId2 string = "4cc10adf-320c-455c-95c3-14830c18676d"
-	token     string = "base64Token=="
-	token2    string = "base64Token2=="
+	deviceId2 string = "5d97dc0a-796b-46e6-bcad-3fd515e15bd0"
+	token     string = "tokenHash"
+	token2    string = "tokenHash2"
 	userAgent string = "Go Test"
 	ipAddress string = "127.0.0.1"
 	duration  uint   = 60
@@ -68,9 +67,7 @@ func (ts *RepositoryTestSuite) TestCreateSession() {
 	ts.Greater(after, before)
 	ts.Equal(after, before+1)
 	ts.Equal(dbSession.UserAgent, mockSession.UserAgent)
-	// Ensure token is hashed
-	ts.NotEqual(dbSession.Token, mockSession.Token)
-	ts.Equal(dbSession.Token, utils.Hash(mockSession.Token))
+	ts.Equal(dbSession.Token, mockSession.Token)
 }
 
 func (ts *RepositoryTestSuite) TestFindSession() {
@@ -81,8 +78,7 @@ func (ts *RepositoryTestSuite) TestFindSession() {
 	_, err := sr.CreateSession(mockSession)
 	ts.NoError(err)
 
-	tokenHash := utils.Hash(mockSession.Token)
-	dbSession, err := sr.FindSession(tokenHash)
+	dbSession, err := sr.FindSession(mockSession.Token)
 	ts.NoError(err)
 
 	// Assert
@@ -101,12 +97,11 @@ func (ts *RepositoryTestSuite) TestUpdateSession() {
 	ts.NoError(err)
 
 	duration := time.Now().Add(time.Hour)
-	tokenHash := utils.Hash(mockSession.Token)
 	// Update session
-	err = sr.ExtendSession(tokenHash, duration)
+	err = sr.ExtendSession(mockSession.Token, duration)
 	ts.NoError(err)
 
-	updatedSession, err := sr.FindSession(tokenHash)
+	updatedSession, err := sr.FindSession(mockSession.Token)
 	ts.NoError(err)
 
 	// Assert
@@ -202,8 +197,7 @@ func (ts *RepositoryTestSuite) TestDeleteSession() {
 	ts.NoError(err)
 
 	// Delete second session by token
-	tokenHash := utils.Hash(mockSession2.Token)
-	err = sr.DeleteSessionByToken(tokenHash)
+	err = sr.DeleteSessionByToken(mockSession2.Token)
 	ts.NoError(err)
 
 	// Count session in db after deleting first session
@@ -211,7 +205,7 @@ func (ts *RepositoryTestSuite) TestDeleteSession() {
 	ts.NoError(err)
 
 	// Assert
-	dbSession, err := sr.FindSession(utils.Hash(mockSession.Token))
+	dbSession, err := sr.FindSession(mockSession.Token)
 	ts.Nil(dbSession)
 	ts.Nil(err)
 
@@ -255,7 +249,7 @@ func (ts *RepositoryTestSuite) TestClearUserSession() {
 	ts.NoError(err)
 
 	// Assert
-	dbSession, err := sr.FindSession(utils.Hash(mockSession.Token))
+	dbSession, err := sr.FindSession(mockSession.Token)
 	ts.Nil(dbSession)
 	ts.Nil(err)
 

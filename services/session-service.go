@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -64,13 +63,6 @@ func (ss *SessionService) CreateSession(userId, deviceId, userAgent, ipAddress s
 		return "", ErrMaximumSession
 	}
 
-	// Delete user's existing session
-	err = ss.sr.DeleteExistingDeviceSession(userId, deviceId)
-	if err != nil {
-		log.Printf("error deleting existing user session: %v", err)
-		return "", ErrInternalServer
-	}
-
 	// Generate token
 	randomBytes, err := utils.RandomByte(uint32(ss.tokenLength))
 	if err != nil {
@@ -78,10 +70,13 @@ func (ss *SessionService) CreateSession(userId, deviceId, userAgent, ipAddress s
 	}
 	token = base64.URLEncoding.EncodeToString(randomBytes)
 
+	// Hash session token to be saved to the db
+	tokenHash := utils.Hash(token)
+
 	newSesParams := &schema.NewSessionParams{
 		UserId:    userId,
 		DeviceId:  deviceId,
-		Token:     token,
+		Token:     tokenHash,
 		UserAgent: userAgent,
 		IPAddress: ipAddress,
 		Duration:  uint(ss.sessionDuration),
@@ -94,7 +89,7 @@ func (ss *SessionService) CreateSession(userId, deviceId, userAgent, ipAddress s
 	}
 
 	// Return the actual token
-	return session.Token, nil
+	return token, nil
 }
 
 func (ss *SessionService) FindSession(token string) (*schema.Session, error) {

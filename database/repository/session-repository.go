@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
-	"github.com/IdrisAkintobi/go-basic-crud/utils"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -20,22 +19,25 @@ func NewSessionRepository(db *pgx.Conn) *SessionRepository {
 }
 
 func (r *SessionRepository) CreateSession(sessionData *schema.Session) (*schema.Session, error) {
-	var result schema.Session
-
-	// Hash session token before saving to the db
-	tokenHash := utils.Hash(sessionData.Token)
-
 	row := r.db.QueryRow(context.Background(), `
 	INSERT INTO sessions (userId, deviceId, token, userAgent, ipAddress, createdAt, expiresAt)
-	values ($1, $2, $3, $4, $5, $6, $7) returning *
-	`, sessionData.UserId, sessionData.DeviceId, tokenHash, sessionData.UserAgent, sessionData.IPAddress, sessionData.CreatedAt, sessionData.ExpiresAt)
+	VALUES ($1, $2, $3, $4, $5, $6, $7)
+	ON CONFLICT (userId, deviceId) 
+	DO UPDATE SET 
+		token = EXCLUDED.token, 
+		userAgent = EXCLUDED.userAgent, 
+		ipAddress = EXCLUDED.ipAddress, 
+		createdAt = EXCLUDED.createdAt, 
+		expiresAt = EXCLUDED.expiresAt
+	RETURNING id
+	`, sessionData.UserId, sessionData.DeviceId, sessionData.Token, sessionData.UserAgent, sessionData.IPAddress, sessionData.CreatedAt, sessionData.ExpiresAt)
 
-	err := row.Scan(&result.ID, &result.UserId, &result.DeviceId, &result.Token, &result.UserAgent, &result.IPAddress, &result.CreatedAt, &result.ExpiresAt)
+	err := row.Scan(&sessionData.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return sessionData, nil
 }
 
 func (r *SessionRepository) FindSession(tokenHash string) (*schema.Session, error) {

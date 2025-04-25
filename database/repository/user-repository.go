@@ -17,19 +17,18 @@ func NewUserRepository(db *pgx.Conn) *UserRepository {
 }
 
 func (r *UserRepository) CreateUser(userData *schema.User) (*schema.User, error) {
-	var result schema.User
 	row := r.db.QueryRow(context.Background(), `
 	INSERT INTO users (email, dob, firstName, lastName, PasswordHash, createdAt, updatedAt)
-	values ($1, $2, $3, $4, $5, $6, $7) returning id, email, dob, firstName, lastName, passwordHash
+	values ($1, $2, $3, $4, $5, $6, $7) returning id
 	`, userData.Email, userData.DOB, userData.FirstName, userData.LastName, userData.PasswordHash, userData.CreatedAt, userData.UpdatedAt)
 
-	err := row.Scan(&result.ID, &result.Email, &result.DOB, &result.FirstName, &result.LastName, &result.PasswordHash)
+	err := row.Scan(&userData.ID)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &result, nil
+	return userData, nil
 }
 
 func (r *UserRepository) GetUserByEmail(email string) (*schema.User, error) {

@@ -4,7 +4,7 @@ A basic CRUD application written in Go.
 
 ## Overview
 
-This project demonstrates how to build a simple CRUD API for user management and authentication using Go. The application uses PostgreSQL as the database and includes basic authentication features. Users can only have five active sessions.
+This project demonstrates how to build a simple CRUD API for user management and authentication using Go. The application uses PostgreSQL as the database and includes basic authentication features with session. Users can only have five active sessions.
 
 ## Prerequisites
 
@@ -12,6 +12,7 @@ This project demonstrates how to build a simple CRUD API for user management and
 - [Git](https://git-scm.com/)
 - [PostgreSQL](https://www.postgresql.org/) (for database setup)
 - [Goose](https://github.com/pressly/goose) (for database migrations)
+- [Maxmind](https://maxmind.com) (to map ip address to city)
 
 ## Setup
 
@@ -64,6 +65,27 @@ make test
 
 This will prepare the test database and run all tests located in the `./tests/` directory.
 
+### un the Application [Development]
+
+Set your Maxmind credentials in the environment variable.
+
+```sh
+GEO21P_ACCOUNT_ID=
+GEO21P_LICENSE_KEY=
+```
+
+Use the below command to download Maxmind database needed for mapping ip address to city:
+
+```sh
+make geoip.download
+```
+
+Run the application using the below command:
+
+```sh
+go run main.go
+```
+
 ### Build and Run the Application
 
 You can build and run the application using the following commands:
@@ -80,6 +102,8 @@ After running the application, you can use your favorite HTTP client (e.g., [Pos
 - `POST /register` - Create a new user
 - `POST /login` - Login user
 - `POST /logout` - Logout user
+- `GET /whoami` - Current user
+- `GET /active-sessions` - Active sessions
 
 ## License
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/IdrisAkintobi/go-basic-crud/handlers/dto"
@@ -23,7 +24,7 @@ func (uh *UserHandler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&userData)
 	if err != nil {
-		utils.SendErrorResponse(w, "error parsing request body: "+err.Error(), http.StatusBadRequest)
+		utils.SendErrorResponse(w, fmt.Sprintf("error parsing request body: %s", err.Error()), http.StatusBadRequest)
 		return
 	}
 

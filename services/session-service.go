@@ -14,6 +14,9 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+var ErrMaximumSession = errors.New("maximum session reached")
+var ErrInternalServer = errors.New("internal server error")
+
 type SessionService struct {
 	sr                                       *repository.SessionRepository
 	sessionDuration, tokenLength, maxSession int
@@ -49,9 +52,6 @@ func NewSessionService(db *pgx.Conn) *SessionService {
 		maxSession:           mxS,
 	}
 }
-
-var ErrMaximumSession = errors.New("maximum session reached")
-var ErrInternalServer = errors.New("internal server error")
 
 func (ss *SessionService) CreateSession(userId, deviceId, userAgent, ipAddress string) (token string, err error) {
 	// Check if maximum session is reached

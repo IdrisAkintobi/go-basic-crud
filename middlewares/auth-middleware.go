@@ -34,7 +34,7 @@ func (um *AuthMiddleware) Register() func(http.Handler) http.Handler {
 			// Check Authorization header
 			authHeader := r.Header.Get("Authorization")
 			if authHeader == "" {
-				http.Error(w, "Unauthorized - No token provided", http.StatusUnauthorized)
+				utils.SendErrorResponse(w, "no token provided", http.StatusUnauthorized)
 				return
 			}
 
@@ -44,11 +44,11 @@ func (um *AuthMiddleware) Register() func(http.Handler) http.Handler {
 			// Validate token
 			session, err := um.ss.FindSession(token)
 			if err != nil && err != pgx.ErrNoRows {
-				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				utils.SendErrorResponse(w, "internal server error", http.StatusInternalServerError)
 				return
 			}
 			if session == nil || session.ExpiresAt.Before(time.Now()) {
-				http.Error(w, "Unauthorized - Invalid token", http.StatusUnauthorized)
+				utils.SendErrorResponse(w, "invalid token", http.StatusUnauthorized)
 				return
 			}
 

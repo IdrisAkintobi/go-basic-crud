@@ -24,7 +24,7 @@ func (us *UserService) RegisterUser(usr *dto.RegisterUserReqDTO) (*dto.RegisterU
 	// Parse user DOB string to time format
 	dob, err := time.Parse(utils.DATE_LAYOUT, usr.DOB)
 	if err != nil {
-		return nil, fmt.Errorf("invalid date format: %v", err)
+		return nil, fmt.Errorf("invalid date format: %w", err)
 	}
 
 	// Hash password

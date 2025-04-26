@@ -10,6 +10,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+var ErrInvalidCred = errors.New("invalid login credentials")
+
 type AuthService struct {
 	ur   *repository.UserRepository
 	ss   *SessionService
@@ -24,8 +26,6 @@ func NewAuthService(db *pgx.Conn) *AuthService {
 	}
 }
 
-var ErrInvalidCred = errors.New("invalid login credentials")
-
 func (as *AuthService) SignIn(cred *dto.AuthLoginReqDTO) (token string, err error) {
 
 	user, err := as.ur.GetUserByEmail(cred.Email)
@@ -35,7 +35,7 @@ func (as *AuthService) SignIn(cred *dto.AuthLoginReqDTO) (token string, err erro
 
 	passwordMatch, err := utils.Argon2id.Compare(user.PasswordHash, []byte(cred.Password))
 	if err != nil {
-		return "", fmt.Errorf("internal server error: %v", err)
+		return "", fmt.Errorf("internal server error: %w", err)
 	}
 
 	if !passwordMatch {
@@ -77,7 +77,7 @@ func (as *AuthService) WhoAmI(userId string) (*dto.WhoAmIResDTO, error) {
 func (as *AuthService) GetActiveSessions(userId string) ([]*dto.ActiveSessionsDTO, error) {
 	allSession, err := as.ss.FindAllActiveSession(userId)
 	if err != nil {
-		return nil, fmt.Errorf("error getting all user session: \n%v", err)
+		return nil, fmt.Errorf("error getting all user session: \n%w", err)
 	}
 
 	if allSession == nil {

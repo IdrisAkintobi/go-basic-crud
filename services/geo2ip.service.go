@@ -15,6 +15,21 @@ const (
 	UNKNOWN_LOCATION = "unknown location"
 )
 
+func init() {
+	// Ensure geo2ip database exists
+	fileInfo, err := os.Stat(DATA_FILE_PATH)
+	if err != nil {
+		if os.IsNotExist(err) {
+			log.Fatalf("geo2ip database does not exist :\n%v", err)
+		}
+		log.Fatalf("error checking geo2ip database:\n%v", err)
+	}
+
+	if fileInfo.Size() < TEN_MEGABYTE {
+		log.Fatalf("geo2ip database is less than 10mb. File size is %dKB", fileInfo.Size()/1024)
+	}
+}
+
 type Geo2IPService struct {
 	db *geoip2.CityReader
 }
@@ -26,18 +41,6 @@ func NewGeo2IPService() *Geo2IPService {
 	}
 	return &Geo2IPService{
 		db: db,
-	}
-}
-
-func init() {
-	// Ensure geo2ip database exists
-	fileInfo, err := os.Stat(DATA_FILE_PATH)
-	if err != nil {
-		log.Fatalf("geo2ip database does not exist :\n%v", err)
-	}
-
-	if fileInfo.Size() < TEN_MEGABYTE {
-		log.Fatalf("geo2ip database is less than 10mb :\n%v", err)
 	}
 }
 

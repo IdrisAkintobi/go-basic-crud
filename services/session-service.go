@@ -11,7 +11,7 @@ import (
 	"github.com/IdrisAkintobi/go-basic-crud/database/repository"
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
 	"github.com/IdrisAkintobi/go-basic-crud/utils"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var ErrMaximumSession = errors.New("maximum session reached")
@@ -23,7 +23,7 @@ type SessionService struct {
 	SessionRefreshWindow                     time.Duration
 }
 
-func NewSessionService(db *pgx.Conn) *SessionService {
+func NewSessionService(db *pgxpool.Pool) *SessionService {
 	sd, err := strconv.Atoi(os.Getenv("SESSION_DURATION"))
 	if err != nil {
 		panic("Invalid SESSION_DURATION: " + err.Error())

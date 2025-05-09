@@ -8,14 +8,14 @@ import (
 	"github.com/IdrisAkintobi/go-basic-crud/middlewares"
 	"github.com/IdrisAkintobi/go-basic-crud/services"
 	"github.com/IdrisAkintobi/go-basic-crud/utils"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type AuthHandler struct {
 	as *services.AuthService
 }
 
-func NewAuthHandler(pg *pgx.Conn) *AuthHandler {
+func NewAuthHandler(pg *pgxpool.Pool) *AuthHandler {
 	return &AuthHandler{as: services.NewAuthService(pg)}
 }
 

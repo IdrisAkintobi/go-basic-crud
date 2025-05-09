@@ -8,14 +8,14 @@ import (
 	"github.com/IdrisAkintobi/go-basic-crud/handlers/dto"
 	"github.com/IdrisAkintobi/go-basic-crud/services"
 	"github.com/IdrisAkintobi/go-basic-crud/utils"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UserHandler struct {
 	us *services.UserService
 }
 
-func NewUserHandler(pg *pgx.Conn) *UserHandler {
+func NewUserHandler(pg *pgxpool.Pool) *UserHandler {
 	return &UserHandler{us: services.NewUserService(pg)}
 }
 

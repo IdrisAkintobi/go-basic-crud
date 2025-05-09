@@ -8,7 +8,7 @@ import (
 	"github.com/IdrisAkintobi/go-basic-crud/database/repository"
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
 	"github.com/IdrisAkintobi/go-basic-crud/utils"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const mockUUID = "f4bd11c8-840a-45eb-b72a-917bd90996a7"
@@ -21,7 +21,7 @@ var mockUser = &schema.User{
 	PasswordHash: []byte(""),
 }
 
-func countUsers(db *pgx.Conn) (int, error) {
+func countUsers(db *pgxpool.Pool) (int, error) {
 	var count int
 	err := db.QueryRow(context.Background(), `
 	SELECT count(*) FROM users;

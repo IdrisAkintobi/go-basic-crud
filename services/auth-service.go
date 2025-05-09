@@ -7,7 +7,7 @@ import (
 	"github.com/IdrisAkintobi/go-basic-crud/database/repository"
 	"github.com/IdrisAkintobi/go-basic-crud/handlers/dto"
 	"github.com/IdrisAkintobi/go-basic-crud/utils"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 var ErrInvalidCred = errors.New("invalid login credentials")
@@ -18,7 +18,7 @@ type AuthService struct {
 	g2ip *Geo2IPService
 }
 
-func NewAuthService(db *pgx.Conn) *AuthService {
+func NewAuthService(db *pgxpool.Pool) *AuthService {
 	return &AuthService{
 		ur:   repository.NewUserRepository(db),
 		ss:   NewSessionService(db),

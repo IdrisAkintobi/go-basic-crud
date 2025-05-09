@@ -1,15 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/httprate"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/IdrisAkintobi/go-basic-crud/database"
 	"github.com/IdrisAkintobi/go-basic-crud/handlers"
@@ -25,6 +29,21 @@ func init() {
 	}
 }
 
+func gracefulShutdown(db *pgxpool.Pool) {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+
+	// Wait for signal
+	<-ch
+	signal.Stop(ch)
+
+	// Do all necessary cleanup
+	database.DisconnectDB(context.Background(), db)
+
+	// Exit process
+	os.Exit(0)
+}
+
 func main() {
 	PORT := os.Getenv("PORT")
 	if PORT == "" {
@@ -36,6 +55,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error connecting to database: %s", err)
 	}
+
+	// Activate graceful shutdown
+	go gracefulShutdown(conn)
 
 	// Setup handler
 	uh := handlers.NewUserHandler(conn)

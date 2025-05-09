@@ -9,6 +9,7 @@ import (
 	"github.com/IdrisAkintobi/go-basic-crud/services"
 	"github.com/IdrisAkintobi/go-basic-crud/utils"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type AuthData struct {
@@ -20,7 +21,7 @@ type AuthMiddleware struct {
 	ss *services.SessionService
 }
 
-func NewAuthMiddleware(db *pgx.Conn) *AuthMiddleware {
+func NewAuthMiddleware(db *pgxpool.Pool) *AuthMiddleware {
 	return &AuthMiddleware{
 		ss: services.NewSessionService(db),
 	}

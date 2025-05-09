@@ -8,13 +8,14 @@ import (
 
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type SessionRepository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewSessionRepository(db *pgx.Conn) *SessionRepository {
+func NewSessionRepository(db *pgxpool.Pool) *SessionRepository {
 	return &SessionRepository{db: db}
 }
 

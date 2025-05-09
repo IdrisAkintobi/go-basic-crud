@@ -8,14 +8,14 @@ import (
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
 	"github.com/IdrisAkintobi/go-basic-crud/handlers/dto"
 	"github.com/IdrisAkintobi/go-basic-crud/utils"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UserService struct {
 	ur *repository.UserRepository
 }
 
-func NewUserService(db *pgx.Conn) *UserService {
+func NewUserService(db *pgxpool.Pool) *UserService {
 	return &UserService{ur: repository.NewUserRepository(db)}
 }
 

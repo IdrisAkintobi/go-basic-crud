@@ -5,18 +5,18 @@ import (
 	"os"
 	"testing"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/suite"
 )
 
 type RepositoryTestSuite struct {
 	suite.Suite
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
 func (ts *RepositoryTestSuite) SetupTest() {
 	dbConnStr := os.Getenv("TEST_DATABASE_URL")
-	conn, err := pgx.Connect(context.Background(), dbConnStr)
+	conn, err := pgxpool.New(context.Background(), dbConnStr)
 	if err != nil {
 		panic((err))
 	}
@@ -31,5 +31,5 @@ func TestRepositoryTestSuite(t *testing.T) {
 
 func (ts *RepositoryTestSuite) TearDownSuite() {
 	// Close the database connection
-	ts.db.Close(context.Background())
+	ts.db.Close()
 }

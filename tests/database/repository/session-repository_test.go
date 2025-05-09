@@ -6,7 +6,7 @@ import (
 
 	"github.com/IdrisAkintobi/go-basic-crud/database/repository"
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 const (
@@ -38,7 +38,7 @@ var mockSession2 = schema.NewSession(&schema.NewSessionParams{
 	Duration:  duration,
 })
 
-func countSessions(db *pgx.Conn) (int, error) {
+func countSessions(db *pgxpool.Pool) (int, error) {
 	var count int
 	err := db.QueryRow(context.Background(), `
 	SELECT count(*) FROM sessions;

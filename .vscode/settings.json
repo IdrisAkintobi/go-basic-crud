@@ -16,6 +16,7 @@
         "ossp",
         "pgpassfile",
         "pgservicefile",
+        "pgxpool",
         "pmezard",
         "psql",
         "rogpeppe",

@@ -42,11 +42,18 @@ func DisconnectDB(ctx context.Context, db *pgxpool.Pool) {
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
+	done := make(chan struct{})
+
+	go func() {
+		db.Close()
+		close(done)
+	}()
+
 	select {
 	case <-ctx.Done():
-		fmt.Printf("\nDatabase graceful shutdown canceled:\n%v", ctx.Err())
-	default:
-		db.Close()
+		err := fmt.Errorf("\nDatabase graceful shutdown canceled: %w", ctx.Err())
+		fmt.Println(err)
+	case <-done:
 		fmt.Println("\nDatabase gracefully shutdown")
 	}
 }

@@ -37,8 +37,12 @@ func gracefulShutdown(db *pgxpool.Pool) {
 	<-ch
 	signal.Stop(ch)
 
+	// Create context that timeout in expected duration for the shutdown
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	// Do all necessary cleanup
-	database.DisconnectDB(context.Background(), db)
+	database.DisconnectDB(ctx, db)
 
 	// Exit process
 	os.Exit(0)

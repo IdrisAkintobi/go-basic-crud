@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -39,9 +38,6 @@ func ConnectDB() (*pgxpool.Pool, error) {
 }
 
 func DisconnectDB(ctx context.Context, db *pgxpool.Pool) {
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-
 	done := make(chan struct{})
 
 	go func() {

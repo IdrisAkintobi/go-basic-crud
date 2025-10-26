@@ -4,10 +4,9 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"os"
-	"strconv"
 	"time"
 
+	"github.com/IdrisAkintobi/go-basic-crud/config"
 	"github.com/IdrisAkintobi/go-basic-crud/database/repository"
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
 	"github.com/IdrisAkintobi/go-basic-crud/utils"
@@ -24,32 +23,13 @@ type SessionService struct {
 }
 
 func NewSessionService(db *pgxpool.Pool) *SessionService {
-	sd, err := strconv.Atoi(os.Getenv("SESSION_DURATION"))
-	if err != nil {
-		panic("Invalid SESSION_DURATION: " + err.Error())
-	}
-
-	srw, err := strconv.Atoi(os.Getenv("SESSION_REFRESH_WINDOW"))
-	if err != nil {
-		panic("Invalid SESSION_REFRESH_WINDOW: " + err.Error())
-	}
-
-	tl, err := strconv.Atoi(os.Getenv("TOKEN_LENGTH"))
-	if err != nil {
-		panic("Invalid TOKEN_LENGTH: " + err.Error())
-	}
-
-	mxS, err := strconv.Atoi(os.Getenv("MAXIMUM_SESSION"))
-	if err != nil {
-		panic("Invalid MAXIMUM_SESSION: " + err.Error())
-	}
-
+	cfg := config.Get()
 	return &SessionService{
 		sr:                   repository.NewSessionRepository(db),
-		sessionDuration:      sd,
-		SessionRefreshWindow: time.Minute * time.Duration(srw),
-		tokenLength:          tl,
-		maxSession:           mxS,
+		sessionDuration:      cfg.SessionDuration,
+		SessionRefreshWindow: time.Minute * time.Duration(cfg.SessionRefreshWindow),
+		tokenLength:          cfg.TokenLength,
+		maxSession:           cfg.MaximumSession,
 	}
 }
 
@@ -73,7 +53,7 @@ func (ss *SessionService) CreateSession(userId, deviceId, userAgent, ipAddress s
 	// Hash session token to be saved to the db
 	tokenHash := utils.Hash(token)
 
-	newSesParams := &schema.NewSessionParams{
+	newSesParams := schema.NewSessionParams{
 		UserId:    userId,
 		DeviceId:  deviceId,
 		Token:     tokenHash,

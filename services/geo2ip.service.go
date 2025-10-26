@@ -6,18 +6,24 @@ import (
 	"net"
 	"os"
 
+	"github.com/IdrisAkintobi/go-basic-crud/config"
 	"github.com/IncSW/geoip2"
 )
 
 const (
 	TEN_MEGABYTE     = 10 << 20
-	DATA_FILE_PATH   = "./geo2ip-data/GeoLite2-City.mmdb"
 	UNKNOWN_LOCATION = "unknown location"
 )
 
-func init() {
+type Geo2IPService struct {
+	db           *geoip2.CityReader
+	dataFilePath string
+}
+
+func NewGeo2IPService() *Geo2IPService {
+	cfg := config.Get()
 	// Ensure geo2ip database exists
-	fileInfo, err := os.Stat(DATA_FILE_PATH)
+	fileInfo, err := os.Stat(cfg.DataFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Fatalf("geo2ip database does not exist :\n%v", err)
@@ -28,19 +34,14 @@ func init() {
 	if fileInfo.Size() < TEN_MEGABYTE {
 		log.Fatalf("geo2ip database is less than 10mb. File size is %dKB", fileInfo.Size()/1024)
 	}
-}
 
-type Geo2IPService struct {
-	db *geoip2.CityReader
-}
-
-func NewGeo2IPService() *Geo2IPService {
-	db, err := geoip2.NewCityReaderFromFile(DATA_FILE_PATH)
+	db, err := geoip2.NewCityReaderFromFile(cfg.DataFilePath)
 	if err != nil {
 		log.Fatalf("error creating geo2ip database: \n%v", err)
 	}
 	return &Geo2IPService{
-		db: db,
+		db:           db,
+		dataFilePath: cfg.DataFilePath,
 	}
 }
 

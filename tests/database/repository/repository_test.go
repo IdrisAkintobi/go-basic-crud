@@ -2,9 +2,9 @@ package repository_test
 
 import (
 	"context"
-	"os"
 	"testing"
 
+	"github.com/IdrisAkintobi/go-basic-crud/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/suite"
 )
@@ -15,8 +15,8 @@ type RepositoryTestSuite struct {
 }
 
 func (ts *RepositoryTestSuite) SetupTest() {
-	dbConnStr := os.Getenv("TEST_DATABASE_URL")
-	conn, err := pgxpool.New(context.Background(), dbConnStr)
+	cfg := config.Get()
+	conn, err := pgxpool.New(context.Background(), cfg.TestDatabaseURL)
 	if err != nil {
 		panic((err))
 	}

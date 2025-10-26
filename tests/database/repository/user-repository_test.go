@@ -3,6 +3,7 @@ package repository_test
 import (
 	"context"
 	"fmt"
+	"testing"
 	"time"
 
 	"github.com/IdrisAkintobi/go-basic-crud/database/repository"
@@ -21,7 +22,8 @@ var mockUser = &schema.User{
 	PasswordHash: []byte(""),
 }
 
-func countUsers(db *pgxpool.Pool) (int, error) {
+func countUsers(t *testing.T, db *pgxpool.Pool) (int, error) {
+	t.Helper()
 	var count int
 	err := db.QueryRow(context.Background(), `
 	SELECT count(*) FROM users;
@@ -32,7 +34,7 @@ func countUsers(db *pgxpool.Pool) (int, error) {
 
 func (ts *RepositoryTestSuite) TestCreateUser() {
 	// Count users in db before creating user
-	before, err := countUsers(ts.db)
+	before, err := countUsers(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Create user repository
@@ -43,7 +45,7 @@ func (ts *RepositoryTestSuite) TestCreateUser() {
 	ts.NoError(err)
 
 	// Count users in db after creating user
-	after, err := countUsers(ts.db)
+	after, err := countUsers(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Assert
@@ -90,8 +92,10 @@ func (ts *RepositoryTestSuite) TestGetUserByEmail() {
 
 	//Get non-existing user
 	dbUser, err = ur.GetUserByEmail(fmt.Sprintf("non-existing-%s", mockUser.Email))
-	ts.Nil(err)
-	ts.Nil(dbUser)
+	ts.NotNil(err)
+	ts.Equal("record not found", err.Error())
+	ts.NotNil(dbUser)
+	ts.Equal("", dbUser.Email)
 }
 
 func (ts *RepositoryTestSuite) TestGetUserById() {
@@ -111,6 +115,8 @@ func (ts *RepositoryTestSuite) TestGetUserById() {
 
 	//Get non-existing user
 	dbUser, err = ur.GetUserById(mockUUID)
-	ts.Nil(dbUser)
-	ts.Nil(err)
+	ts.NotNil(err)
+	ts.Equal("record not found", err.Error())
+	ts.NotNil(dbUser)
+	ts.Equal("", dbUser.Email)
 }

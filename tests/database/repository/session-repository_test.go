@@ -2,6 +2,7 @@ package repository_test
 
 import (
 	"context"
+	"testing"
 	"time"
 
 	"github.com/IdrisAkintobi/go-basic-crud/database/repository"
@@ -20,7 +21,7 @@ const (
 	duration  uint   = 60
 )
 
-var mockSession = schema.NewSession(&schema.NewSessionParams{
+var mockSession = schema.NewSession(schema.NewSessionParams{
 	UserId:    userId,
 	DeviceId:  deviceId,
 	Token:     token,
@@ -29,7 +30,7 @@ var mockSession = schema.NewSession(&schema.NewSessionParams{
 	Duration:  duration,
 })
 
-var mockSession2 = schema.NewSession(&schema.NewSessionParams{
+var mockSession2 = schema.NewSession(schema.NewSessionParams{
 	UserId:    userId,
 	DeviceId:  deviceId2,
 	Token:     token2,
@@ -38,7 +39,8 @@ var mockSession2 = schema.NewSession(&schema.NewSessionParams{
 	Duration:  duration,
 })
 
-func countSessions(db *pgxpool.Pool) (int, error) {
+func countSessions(t *testing.T, db *pgxpool.Pool) (int, error) {
+	t.Helper()
 	var count int
 	err := db.QueryRow(context.Background(), `
 	SELECT count(*) FROM sessions;
@@ -49,7 +51,7 @@ func countSessions(db *pgxpool.Pool) (int, error) {
 
 func (ts *RepositoryTestSuite) TestCreateSession() {
 	// Count session in db before creating session
-	before, err := countSessions(ts.db)
+	before, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Create session repository
@@ -60,7 +62,7 @@ func (ts *RepositoryTestSuite) TestCreateSession() {
 	ts.NoError(err)
 
 	// Count session in db after creating session
-	after, err := countSessions(ts.db)
+	after, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Assert
@@ -166,7 +168,7 @@ func (ts *RepositoryTestSuite) TestFindAllSession() {
 
 func (ts *RepositoryTestSuite) TestDeleteSession() {
 	// Count session in db before creating session
-	beforeCreate, err := countSessions(ts.db)
+	beforeCreate, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Create session repository
@@ -177,7 +179,7 @@ func (ts *RepositoryTestSuite) TestDeleteSession() {
 	ts.NoError(err)
 
 	// Count session in db after first session creation
-	firstCreateCount, err := countSessions(ts.db)
+	firstCreateCount, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Create second session
@@ -185,7 +187,7 @@ func (ts *RepositoryTestSuite) TestDeleteSession() {
 	ts.NoError(err)
 
 	// Count session in db after second session creation
-	secondCreateCount, err := countSessions(ts.db)
+	secondCreateCount, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Delete first session by id
@@ -193,7 +195,7 @@ func (ts *RepositoryTestSuite) TestDeleteSession() {
 	ts.NoError(err)
 
 	// Count session in db after deleting first session
-	afterFirstDelete, err := countSessions(ts.db)
+	afterFirstDelete, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Delete second session by token
@@ -201,13 +203,15 @@ func (ts *RepositoryTestSuite) TestDeleteSession() {
 	ts.NoError(err)
 
 	// Count session in db after deleting first session
-	afterSecondDelete, err := countSessions(ts.db)
+	afterSecondDelete, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Assert
 	dbSession, err := sr.FindSession(mockSession.Token)
-	ts.Nil(dbSession)
-	ts.Nil(err)
+	ts.NotNil(err)
+	ts.Equal("record not found", err.Error())
+	ts.NotNil(dbSession)
+	ts.Equal("", dbSession.UserId)
 
 	ts.Greater(firstCreateCount, beforeCreate)
 	ts.Greater(secondCreateCount, firstCreateCount)
@@ -218,7 +222,7 @@ func (ts *RepositoryTestSuite) TestDeleteSession() {
 
 func (ts *RepositoryTestSuite) TestClearUserSession() {
 	// Count session in db before creating session
-	beforeCreate, err := countSessions(ts.db)
+	beforeCreate, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Create session repository
@@ -229,7 +233,7 @@ func (ts *RepositoryTestSuite) TestClearUserSession() {
 	ts.NoError(err)
 
 	// Count session in db after first session creation
-	firstCreateCount, err := countSessions(ts.db)
+	firstCreateCount, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Create second session
@@ -237,7 +241,7 @@ func (ts *RepositoryTestSuite) TestClearUserSession() {
 	ts.NoError(err)
 
 	// Count session in db after second session creation
-	secondCreateCount, err := countSessions(ts.db)
+	secondCreateCount, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Clear user session
@@ -245,13 +249,15 @@ func (ts *RepositoryTestSuite) TestClearUserSession() {
 	ts.NoError(err)
 
 	// Count session after clearing
-	afterClearing, err := countSessions(ts.db)
+	afterClearing, err := countSessions(ts.T(), ts.db)
 	ts.NoError(err)
 
 	// Assert
 	dbSession, err := sr.FindSession(mockSession.Token)
-	ts.Nil(dbSession)
-	ts.Nil(err)
+	ts.NotNil(err)
+	ts.Equal("record not found", err.Error())
+	ts.NotNil(dbSession)
+	ts.Equal("", dbSession.UserId)
 
 	ts.Greater(firstCreateCount, beforeCreate)
 	ts.Greater(secondCreateCount, firstCreateCount)

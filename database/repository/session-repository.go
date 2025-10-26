@@ -2,12 +2,10 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
-	"github.com/jackc/pgx/v5"
+	"github.com/IdrisAkintobi/go-basic-crud/utils"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -34,11 +32,8 @@ func (r *SessionRepository) CreateSession(sessionData *schema.Session) (*schema.
 	`, sessionData.UserId, sessionData.DeviceId, sessionData.Token, sessionData.UserAgent, sessionData.IPAddress, sessionData.CreatedAt, sessionData.ExpiresAt)
 
 	err := row.Scan(&sessionData.ID)
-	if err != nil {
-		return nil, err
-	}
 
-	return sessionData, nil
+	return sessionData, utils.FormatDBError(err)
 }
 
 func (r *SessionRepository) FindSession(tokenHash string) (*schema.Session, error) {
@@ -50,18 +45,16 @@ func (r *SessionRepository) FindSession(tokenHash string) (*schema.Session, erro
 	WHERE token = $1`, tokenHash)
 
 	err := row.Scan(&result.ID, &result.UserId, &result.DeviceId, &result.Token, &result.UserAgent, &result.IPAddress, &result.ExpiresAt)
-	if err != nil {
-		return handleFindSessionError(err)
-	}
 
-	return &result, nil
+	return &result, utils.FormatDBError(err)
 }
 
 func (r *SessionRepository) DeleteExistingDeviceSession(userId, deviceId string) error {
 	_, err := r.db.Exec(context.Background(), `
-	DELETE FROM sessions 
+	DELETE FROM sessions
 	WHERE userId = $1 AND deviceId = $2`, userId, deviceId)
-	return err
+
+	return utils.FormatDBError(err)
 }
 
 func (r *SessionRepository) FindActiveSession(userId string) ([]*schema.Session, error) {
@@ -72,7 +65,7 @@ func (r *SessionRepository) FindActiveSession(userId string) ([]*schema.Session,
 	FROM sessions
 	WHERE userId = $1 AND expiresAt > NOW()`, userId)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query for sessions: %w", err)
+		return nil, utils.FormatDBError(err)
 	}
 	defer rows.Close()
 
@@ -80,14 +73,14 @@ func (r *SessionRepository) FindActiveSession(userId string) ([]*schema.Session,
 		var session schema.Session
 		err = rows.Scan(&session.ID, &session.UserId, &session.DeviceId, &session.Token, &session.UserAgent, &session.IPAddress, &session.CreatedAt, &session.ExpiresAt)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan session row: %w", err)
+			return nil, utils.FormatDBError(err)
 		}
 
 		sessions = append(sessions, &session)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("failed to iterate sessions: %w", err)
+		return nil, utils.FormatDBError(err)
 	}
 
 	return sessions, nil
@@ -95,34 +88,32 @@ func (r *SessionRepository) FindActiveSession(userId string) ([]*schema.Session,
 
 func (r *SessionRepository) ExtendSession(tokenHash string, expiresAt time.Time) error {
 	_, err := r.db.Exec(context.Background(), `UPDATE sessions SET expiresAt = $1 WHERE token = $2`, expiresAt, tokenHash)
-	return err
+
+	return utils.FormatDBError(err)
 }
 
 func (r *SessionRepository) CountUserActiveSessions(userId string) (int, error) {
 	var count int
 	row := r.db.QueryRow(context.Background(), `SELECT COUNT(*) FROM sessions WHERE userId = $1 AND expiresAt > NOW()`, userId)
 	err := row.Scan(&count)
-	return count, err
+
+	return count, utils.FormatDBError(err)
 }
 
 func (r *SessionRepository) DeleteSessionById(id int) error {
 	_, err := r.db.Exec(context.Background(), `DELETE FROM sessions WHERE id = $1`, id)
-	return err
+
+	return utils.FormatDBError(err)
 }
 
 func (r *SessionRepository) DeleteSessionByToken(tokenHash string) error {
 	_, err := r.db.Exec(context.Background(), `DELETE FROM sessions WHERE token = $1`, tokenHash)
-	return err
+
+	return utils.FormatDBError(err)
 }
 
 func (r *SessionRepository) ClearUserSession(userId string) error {
 	_, err := r.db.Exec(context.Background(), `DELETE FROM sessions WHERE userId = $1`, userId)
-	return err
-}
 
-func handleFindSessionError(err error) (*schema.Session, error) {
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, nil
-	}
-	return nil, err
+	return utils.FormatDBError(err)
 }

@@ -19,7 +19,7 @@ type NewSessionParams struct {
 }
 
 // Constructor function to create a new User with default timestamps
-func NewSession(params *NewSessionParams) *Session {
+func NewSession(params NewSessionParams) *Session {
 	now := time.Now()
 	return &Session{
 		UserId:    params.UserId,

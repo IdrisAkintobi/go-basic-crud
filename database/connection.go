@@ -3,9 +3,9 @@ package database
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
+	"github.com/IdrisAkintobi/go-basic-crud/config"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -18,12 +18,13 @@ func (config *DbConfig) String() string {
 }
 
 func ConnectDB() (*pgxpool.Pool, error) {
+	cfg := config.Get()
 	dbCong := &DbConfig{
-		host:     os.Getenv("DB_HOST"),
-		port:     os.Getenv("DB_PORT"),
-		username: os.Getenv("DB_USER"),
-		password: os.Getenv("DB_PASSWORD"),
-		dbName:   os.Getenv("DB_NAME"),
+		host:     cfg.DBHost,
+		port:     cfg.DBPort,
+		username: cfg.DBUser,
+		password: cfg.DBPassword,
+		dbName:   cfg.DBName,
 	}
 
 	config, err := pgxpool.ParseConfig(dbCong.String())

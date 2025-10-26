@@ -7,25 +7,23 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
-	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/httprate"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/IdrisAkintobi/go-basic-crud/config"
 	"github.com/IdrisAkintobi/go-basic-crud/database"
-	"github.com/IdrisAkintobi/go-basic-crud/handlers"
-	"github.com/IdrisAkintobi/go-basic-crud/middlewares"
+	"github.com/IdrisAkintobi/go-basic-crud/routes"
 	"github.com/joho/godotenv"
 )
 
 func init() {
-	// Load .env file
+	// Load .env file in local development if it exists
+	appENV := strings.ToLower(os.Getenv("APP_ENV"))
 	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading .env file: %s", err)
+	if appENV == "local" && err != nil {
+		log.Fatalf("Warning: .env file not found or could not be loaded: %s", err)
 	}
 }
 
@@ -45,10 +43,8 @@ func gracefulShutdown(db *pgxpool.Pool) {
 }
 
 func main() {
-	PORT := os.Getenv("PORT")
-	if PORT == "" {
-		PORT = "3003"
-	}
+	// Load configuration
+	cfg := config.Load()
 
 	// Connect database
 	conn, err := database.ConnectDB()
@@ -59,23 +55,10 @@ func main() {
 	// Activate graceful shutdown
 	go gracefulShutdown(conn)
 
-	// Setup handler
-	uh := handlers.NewUserHandler(conn)
-	ah := handlers.NewAuthHandler(conn)
-
-	//create auth middleware
-	authMiddleware := middlewares.NewAuthMiddleware(conn)
-
-	// Setup routers
-	r := chi.NewRouter()
-	r.Use(httprate.LimitByIP(100, 1*time.Minute), middleware.CleanPath, middleware.StripSlashes, middleware.Logger, middleware.Recoverer)
-	r.Post("/register", uh.RegisterUser)
-	r.With(middlewares.GetUserFingerprint).Post("/login", ah.Login)
-	r.With(authMiddleware.Register()).Get("/whoami", ah.WhoAmI)
-	r.With(authMiddleware.Register()).Get("/active-sessions", ah.GetActiveSessions)
-	r.With(authMiddleware.Register()).Post("/logout", ah.LogOut)
+	// Setup routes
+	r := routes.SetupRoutes(conn)
 
 	// Start server
-	fmt.Printf("Server starting on %v\n", PORT)
-	http.ListenAndServe(":3003", r)
+	fmt.Printf("Server starting on %v\n", cfg.Port)
+	http.ListenAndServe(":"+cfg.Port, r)
 }

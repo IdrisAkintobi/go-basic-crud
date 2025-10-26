@@ -2,10 +2,9 @@ package repository
 
 import (
 	"context"
-	"errors"
 
 	"github.com/IdrisAkintobi/go-basic-crud/database/schema"
-	"github.com/jackc/pgx/v5"
+	"github.com/IdrisAkintobi/go-basic-crud/utils"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -25,11 +24,7 @@ func (r *UserRepository) CreateUser(userData *schema.User) (*schema.User, error)
 
 	err := row.Scan(&userData.ID)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return userData, nil
+	return userData, utils.FormatDBError(err)
 }
 
 func (r *UserRepository) GetUserByEmail(email string) (*schema.User, error) {
@@ -41,11 +36,7 @@ func (r *UserRepository) GetUserByEmail(email string) (*schema.User, error) {
 
 	err := row.Scan(&result.ID, &result.Email, &result.DOB, &result.FirstName, &result.LastName, &result.PasswordHash)
 
-	if err != nil {
-		return handleFindUserError(err)
-	}
-
-	return &result, nil
+	return &result, utils.FormatDBError(err)
 }
 
 func (r *UserRepository) GetUserById(userId string) (*schema.User, error) {
@@ -56,16 +47,5 @@ func (r *UserRepository) GetUserById(userId string) (*schema.User, error) {
 
 	err := row.Scan(&result.ID, &result.Email, &result.DOB, &result.FirstName, &result.LastName, &result.PasswordHash)
 
-	if err != nil {
-		return handleFindUserError(err)
-	}
-
-	return &result, nil
-}
-
-func handleFindUserError(err error) (*schema.User, error) {
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, nil
-	}
-	return nil, err
+	return &result, utils.FormatDBError(err)
 }
